@@ -5,3 +5,4 @@
 [assembly: AssemblyCopyright("Copyright © 2017 Marcin Wachulski - SI")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyInformationalVersion("1.0.0.0")]

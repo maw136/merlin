@@ -1,5 +1,7 @@
 ## Project Merlin 
 
+[![Build status](https://ci.appveyor.com/api/projects/status/r8809leqsgqkl2a9?svg=true)](https://ci.appveyor.com/project/wachulski/merlin)
+
 #### Merlin manages configuration for deployable components
 
 The purpose of this project is to help manage different sources of configuration for deployable apps. The intended foundation focuses on configuration sources read/write/transform utils and a set of classes expressing the configuration domain.
