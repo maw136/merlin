@@ -14,9 +14,8 @@ namespace MarWac.Merlin.UnitTests
                 parameters:
                     - callTimeoutSeconds: 15";
 
-            var stream = new MemoryStream(Encoding.UTF8.GetBytes(source));
-            var driver = new YamlConfigurationSourceDriver();
-            var configuration = driver.Read(stream);
+            var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
+            var configuration = new YamlConfigurationSourceDriver().Read(sourceStream);
 
             Assert.That(configuration.Parameters[0].Name, Is.EqualTo("callTimeoutSeconds"));
         }
