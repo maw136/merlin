@@ -54,9 +54,16 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="YamlConfigurationSourceDriverTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MarWac.Merlin\MarWac.Merlin.csproj">
+      <Project>{6a6f4d58-2ea6-49cb-bef6-554e8bf69db4}</Project>
+      <Name>MarWac.Merlin</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
