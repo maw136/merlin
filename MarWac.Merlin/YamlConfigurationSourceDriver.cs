@@ -50,6 +50,16 @@ namespace MarWac.Merlin
 
         private static IEnumerable<YamlMappingNode> ReadParametersSequence(YamlMappingNode root)
         {
+            var firstUnknownSection = root?.Children.Keys
+                                           .OfType<YamlScalarNode>()
+                                           .Where(x => x.Value != "parameters")
+                                           .Select(x => x.Value)
+                                           .FirstOrDefault();
+            if (firstUnknownSection != null)
+            {
+                throw new InvalidYamlSourceFormat($"Unknown section `{firstUnknownSection}`.");
+            }
+
             var parametersNode = root?.Children[new YamlScalarNode("parameters")] as YamlSequenceNode;
 
             if (parametersNode == null)
