@@ -20,27 +20,27 @@ namespace MarWac.Merlin
         {
             var configuration = new Configuration();
 
-            using (var reader = new StreamReader(source))
-            {
-                YamlMappingNode root = ReadRoot(reader);
-                IEnumerable<YamlMappingNode> parameters = ReadParametersSequence(root);
-                FillConfigurationWithParameters(configuration, parameters);
-            }
+            YamlMappingNode root = ReadRoot(source);
+            IEnumerable<YamlMappingNode> parameters = ReadParametersSequence(root);
+            FillConfigurationWithParameters(configuration, parameters);
 
             return configuration;
         }
 
-        private static YamlMappingNode ReadRoot(TextReader reader)
+        private static YamlMappingNode ReadRoot(Stream source)
         {
             var yaml = new YamlStream();
 
-            try
+            using (var reader = new StreamReader(source))
             {
-                yaml.Load(reader);
-            }
-            catch (SemanticErrorException ex)
-            {
-                throw new SourceReadException("Invalid YAML syntax in configuration source provided.", ex);
+                try
+                {
+                    yaml.Load(reader);
+                }
+                catch (SemanticErrorException ex)
+                {
+                    throw new SourceReadException("Invalid YAML syntax in configuration source provided.", ex);
+                }
             }
 
             var root = yaml.Documents?.FirstOrDefault()?.RootNode as YamlMappingNode;
