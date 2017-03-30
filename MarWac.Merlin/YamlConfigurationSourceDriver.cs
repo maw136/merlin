@@ -59,8 +59,9 @@ namespace MarWac.Merlin
             {
                 KeyValuePair<YamlNode, YamlNode> parameterAssignment = parameter.Children.First();
                 string parameterName = parameterAssignment.Key.ToString();
+                string parameterValue = parameterAssignment.Value.ToString();
 
-                configuration.Parameters.Add(new ConfigurationParameter(parameterName));
+                configuration.Parameters.Add(new ConfigurationParameter(parameterName, parameterValue));
             }
         }
     }
