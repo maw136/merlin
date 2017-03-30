@@ -6,6 +6,7 @@ namespace MarWac.Merlin
     /// <summary>
     /// Thrown when syntactically valid YAML source contains semantic errors (missing elements, wrong ordering, etc.)
     /// </summary>
+    // TODO: rename to comply to Exception C# naming convention
     public class InvalidYamlSourceFormat : SourceReadException
     {
         public InvalidYamlSourceFormat()

@@ -28,17 +28,22 @@ namespace MarWac.Merlin
 
             return configuration;
         }
-
+        // TODO: checking root? not needed down the road
         private static YamlMappingNode ReadRoot(Stream source)
         {
             var yamlDoc = LoadYamlFromSource(source).Documents?.FirstOrDefault();
-
             if (yamlDoc == null)
             {
                 throw new InvalidYamlSourceFormat("Empty YAML source. Cannot read configuration.");
             }
 
-            return yamlDoc.RootNode as YamlMappingNode;
+            var rootAsMapping = yamlDoc.RootNode as YamlMappingNode;
+            if (rootAsMapping == null)
+            {
+                throw new InvalidYamlSourceFormat("No valid section provided.");
+            }
+
+            return rootAsMapping;
         }
 
         private static YamlStream LoadYamlFromSource(Stream source)
@@ -62,14 +67,16 @@ namespace MarWac.Merlin
 
         private static IEnumerable<YamlMappingNode> ReadParametersSequence(YamlMappingNode root)
         {
-            var parametersNode = root?.Children[new YamlScalarNode(ParametersSectionName)] as YamlSequenceNode;
+            YamlNode parametersNode;
+            root.Children.TryGetValue(new YamlScalarNode(ParametersSectionName), out parametersNode);
+            YamlSequenceNode parametersSequence = parametersNode as YamlSequenceNode;
 
-            if (parametersNode == null)
+            if (parametersSequence == null)
             {
-                throw new InvalidYamlSourceFormat("Missing `parameters` node.");
+                throw new InvalidYamlSourceFormat("Missing `parameters` section.");
             }
 
-            return parametersNode.Children.OfType<YamlMappingNode>();
+            return parametersSequence.Children.OfType<YamlMappingNode>();
         }
 
         private static void BuildUpParameters(YamlMappingNode root, Configuration configuration)

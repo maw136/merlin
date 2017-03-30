@@ -5,6 +5,7 @@ using YamlDotNet.Core;
 
 namespace MarWac.Merlin.UnitTests
 {
+    // TODO: refine test names to comply to Exception C# naming convention
     [TestFixture]
     public class YamlConfigurationSourceDriverTests
     {
