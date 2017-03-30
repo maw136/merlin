@@ -93,6 +93,29 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(ex.Message, Is.EqualTo("Missing `parameters` node."));
         }
 
+        [Test]
+        public void Read_GivenParameterNotUnderParametersSection_ThrowsSourceReadException()
+        {
+            Assert.Throws<SourceReadException>(() => Read(@"
+                parameters:
+                  - firstParam: 20
+                  
+                - orphanParam: someValue"));
+        }
+
+        [Test]
+        public void Read_GivenParameterUnderDifferentSection_ThrowsInvalidYamlSourceFormat()
+        {
+            var ex = Assert.Throws<InvalidYamlSourceFormat>(() => Read(@"
+                parameters:
+                  - firstParam: 20
+                
+                someOtherSection:
+                  - renegadeParam: someValue"));
+
+            Assert.That(ex.Message, Is.EqualTo("Unknown section `someOtherSection`."));
+        }
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
