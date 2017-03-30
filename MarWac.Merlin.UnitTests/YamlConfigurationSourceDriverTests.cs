@@ -84,6 +84,15 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(ex.InnerException, Is.TypeOf<SemanticErrorException>());
         }
 
+        [Test]
+        public void Read_GivenInputWithoutParametersSection_ThrowsInvalidYamlSourceFormat()
+        {
+            var ex = Assert.Throws<InvalidYamlSourceFormat>(() => Read(@"---
+                  - paramKey"));
+
+            Assert.That(ex.Message, Is.EqualTo("Missing `parameters` node."));
+        }
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
