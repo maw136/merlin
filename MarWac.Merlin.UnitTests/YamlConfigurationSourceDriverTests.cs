@@ -80,6 +80,7 @@ namespace MarWac.Merlin.UnitTests
                   - key
                  - error"));
 
+            Assert.That(ex.Message, Is.EqualTo("Invalid YAML syntax in configuration source provided."));
             Assert.That(ex.InnerException, Is.TypeOf<SemanticErrorException>());
         }
 

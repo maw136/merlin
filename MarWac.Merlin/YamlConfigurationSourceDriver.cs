@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 
 namespace MarWac.Merlin
@@ -32,7 +33,15 @@ namespace MarWac.Merlin
         private static YamlMappingNode ReadRoot(TextReader reader)
         {
             var yaml = new YamlStream();
-            yaml.Load(reader);
+
+            try
+            {
+                yaml.Load(reader);
+            }
+            catch (SemanticErrorException ex)
+            {
+                throw new SourceReadException("Invalid YAML syntax in configuration source provided.", ex);
+            }
 
             var root = yaml.Documents?.FirstOrDefault()?.RootNode as YamlMappingNode;
 
