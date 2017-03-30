@@ -10,12 +10,9 @@ namespace MarWac.Merlin.UnitTests
         [Test]
         public void Read_GivenSingleParamUnderParametersNode_ReadsParameterNameCorrectly()
         {
-            const string source = @"---
+            var configuration = Read(@"---
                 parameters:
-                    - callTimeoutSeconds: 15";
-
-            var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
-            var configuration = new YamlConfigurationSourceDriver().Read(sourceStream);
+                    - callTimeoutSeconds: 15");
 
             Assert.That(configuration.Parameters[0].Name, Is.EqualTo("callTimeoutSeconds"));
         }
@@ -23,14 +20,18 @@ namespace MarWac.Merlin.UnitTests
         [Test]
         public void Read_GivenSingleParamUnderParametersNode_ReadsParameterValueCorrectly()
         {
-            const string source = @"---
+            var configuration = Read(@"---
                 parameters:
-                    - callTimeoutSeconds: 15";
-
-            var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
-            var configuration = new YamlConfigurationSourceDriver().Read(sourceStream);
+                    - callTimeoutSeconds: 15");
 
             Assert.That(configuration.Parameters[0].Value, Is.EqualTo("15"));
+        }
+
+        private static Configuration Read(string source)
+        {
+            var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
+            var configuration = new YamlConfigurationSourceDriver().Read(sourceStream);
+            return configuration;
         }
     }
 }
