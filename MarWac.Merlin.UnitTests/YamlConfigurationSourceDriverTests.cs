@@ -85,12 +85,22 @@ namespace MarWac.Merlin.UnitTests
         }
 
         [Test]
-        public void Read_GivenInputWithoutParametersSection_ThrowsInvalidYamlSourceFormat()
+        public void Read_GivenInputWithNoValidSection_ThrowsInvalidYamlSourceFormat()
         {
             var ex = Assert.Throws<InvalidYamlSourceFormat>(() => Read(@"---
                   - paramKey"));
 
-            Assert.That(ex.Message, Is.EqualTo("Missing `parameters` node."));
+            Assert.That(ex.Message, Is.EqualTo("No valid section provided."));
+        }
+
+        [Test]
+        public void Read_GivenInputWithoutParametersSection_ThrowsInvalidYamlSourceFormat()
+        {
+            var ex = Assert.Throws<InvalidYamlSourceFormat>(() => Read(@"
+                awkwardSection:
+                  - paramKey"));
+
+            Assert.That(ex.Message, Is.EqualTo("Missing `parameters` section."));
         }
 
         [Test]
