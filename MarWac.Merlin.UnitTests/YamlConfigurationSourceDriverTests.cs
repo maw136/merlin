@@ -27,6 +27,50 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(configuration.Parameters[0].Value, Is.EqualTo("15"));
         }
 
+        [Test]
+        public void Read_GivenTwoParamsUnderParametersNode_ReadsFirstParamNameCorrectly()
+        {
+            var configuration = Read(@"---
+                parameters:
+                    - callTimeoutSeconds: 15
+                    - importLocation: //share/imports/");
+
+            Assert.That(configuration.Parameters[0].Name, Is.EqualTo("callTimeoutSeconds"));
+        }
+
+        [Test]
+        public void Read_GivenTwoParamsUnderParametersNode_ReadsFirstParamValueCorrectly()
+        {
+            var configuration = Read(@"---
+                parameters:
+                    - callTimeoutSeconds: 15
+                    - importLocation: //share/imports/");
+
+            Assert.That(configuration.Parameters[0].Value, Is.EqualTo("15"));
+        }
+
+        [Test]
+        public void Read_GivenTwoParamsUnderParametersNode_ReadsSecondParamNameCorrectly()
+        {
+            var configuration = Read(@"---
+                parameters:
+                    - callTimeoutSeconds: 15
+                    - importLocation: //share/imports/");
+
+            Assert.That(configuration.Parameters[1].Name, Is.EqualTo("importLocation"));
+        }
+
+        [Test]
+        public void Read_GivenTwoParamsUnderParametersNode_ReadsSecondParamValueCorrectly()
+        {
+            var configuration = Read(@"---
+                parameters:
+                    - callTimeoutSeconds: 15
+                    - importLocation: //share/imports/");
+
+            Assert.That(configuration.Parameters[1].Value, Is.EqualTo("//share/imports/"));
+        }
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
