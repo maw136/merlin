@@ -12,6 +12,8 @@ namespace MarWac.Merlin
         /// </summary>
         public string Name { get; }
 
+        public string Value { get; set; }
+
         public ConfigurationParameter(string name)
         {
             if (string.IsNullOrEmpty(name))

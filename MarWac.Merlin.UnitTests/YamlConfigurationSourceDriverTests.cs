@@ -19,5 +19,18 @@ namespace MarWac.Merlin.UnitTests
 
             Assert.That(configuration.Parameters[0].Name, Is.EqualTo("callTimeoutSeconds"));
         }
+
+        [Test]
+        public void Read_GivenSingleParamUnderParametersNode_ReadsParameterValueCorrectly()
+        {
+            const string source = @"---
+                parameters:
+                    - callTimeoutSeconds: 15";
+
+            var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
+            var configuration = new YamlConfigurationSourceDriver().Read(sourceStream);
+
+            Assert.That(configuration.Parameters[0].Value, Is.EqualTo("15"));
+        }
     }
 }
