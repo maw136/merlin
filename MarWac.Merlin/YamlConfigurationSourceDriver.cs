@@ -51,6 +51,12 @@ namespace MarWac.Merlin
         private static IEnumerable<YamlMappingNode> ReadParametersSequence(YamlMappingNode root)
         {
             var parametersNode = root?.Children[new YamlScalarNode("parameters")] as YamlSequenceNode;
+
+            if (parametersNode == null)
+            {
+                throw new InvalidYamlSourceFormat("Missing `parameters` node.");
+            }
+
             var parametersNodeChildrenAsMappings = parametersNode?.Children.OfType<YamlMappingNode>();
 
             return parametersNodeChildrenAsMappings;
