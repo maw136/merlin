@@ -5,7 +5,6 @@ using YamlDotNet.Core;
 
 namespace MarWac.Merlin.UnitTests
 {
-    // TODO: refine test names to comply to Exception C# naming convention
     [TestFixture]
     public class YamlConfigurationSourceDriverTests
     {
@@ -86,18 +85,18 @@ namespace MarWac.Merlin.UnitTests
         }
 
         [Test]
-        public void Read_GivenInputWithNoValidSection_ThrowsInvalidYamlSourceFormat()
+        public void Read_GivenInputWithNoValidSection_ThrowsInvalidYamlSourceFormatException()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormat>(() => Read(@"---
+            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => Read(@"---
                   - paramKey"));
 
             Assert.That(ex.Message, Is.EqualTo("No valid section provided."));
         }
 
         [Test]
-        public void Read_GivenInputWithoutParametersSection_ThrowsInvalidYamlSourceFormat()
+        public void Read_GivenInputWithoutParametersSection_ThrowsInvalidYamlSourceFormatException()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormat>(() => Read(@"
+            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => Read(@"
                 awkwardSection:
                   - paramKey"));
 
@@ -115,9 +114,9 @@ namespace MarWac.Merlin.UnitTests
         }
 
         [Test]
-        public void Read_GivenParameterUnderDifferentSection_ThrowsInvalidYamlSourceFormat()
+        public void Read_GivenParameterUnderDifferentSection_ThrowsInvalidYamlSourceFormatException()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormat>(() => Read(@"
+            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => Read(@"
                 parameters:
                   - firstParam: 20
                 
@@ -128,9 +127,9 @@ namespace MarWac.Merlin.UnitTests
         }
 
         [Test]
-        public void Read_GivenEmptySource_ThrowsInvalidYamlSourceFormat()
+        public void Read_GivenEmptySource_ThrowsInvalidYamlSourceFormatException()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormat>(() => Read(string.Empty));
+            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => Read(string.Empty));
 
             Assert.That(ex.Message, Is.EqualTo("Empty YAML source. Cannot read configuration."));
         }

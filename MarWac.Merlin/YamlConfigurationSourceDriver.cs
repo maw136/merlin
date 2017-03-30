@@ -28,19 +28,19 @@ namespace MarWac.Merlin
 
             return configuration;
         }
-        // TODO: checking root? not needed down the road
+
         private static YamlMappingNode ReadRoot(Stream source)
         {
             var yamlDoc = LoadYamlFromSource(source).Documents?.FirstOrDefault();
             if (yamlDoc == null)
             {
-                throw new InvalidYamlSourceFormat("Empty YAML source. Cannot read configuration.");
+                throw new InvalidYamlSourceFormatException("Empty YAML source. Cannot read configuration.");
             }
 
             var rootAsMapping = yamlDoc.RootNode as YamlMappingNode;
             if (rootAsMapping == null)
             {
-                throw new InvalidYamlSourceFormat("No valid section provided.");
+                throw new InvalidYamlSourceFormatException("No valid section provided.");
             }
 
             return rootAsMapping;
@@ -73,7 +73,7 @@ namespace MarWac.Merlin
 
             if (parametersSequence == null)
             {
-                throw new InvalidYamlSourceFormat("Missing `parameters` section.");
+                throw new InvalidYamlSourceFormatException("Missing `parameters` section.");
             }
 
             return parametersSequence.Children.OfType<YamlMappingNode>();
@@ -100,14 +100,14 @@ namespace MarWac.Merlin
 
         private void EnsureNoUnknownSectionProvided(YamlMappingNode root)
         {
-            var firstUnknownSection = root?.Children.Keys
-                                           .OfType<YamlScalarNode>()
-                                           .Where(x => x.Value != ParametersSectionName)
-                                           .Select(x => x.Value)
-                                           .FirstOrDefault();
+            var firstUnknownSection = root.Children.Keys
+                                          .OfType<YamlScalarNode>()
+                                          .Where(x => x.Value != ParametersSectionName)
+                                          .Select(x => x.Value)
+                                          .FirstOrDefault();
             if (firstUnknownSection != null)
             {
-                throw new InvalidYamlSourceFormat($"Unknown section `{firstUnknownSection}`.");
+                throw new InvalidYamlSourceFormatException($"Unknown section `{firstUnknownSection}`.");
             }
         }
     }
