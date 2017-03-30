@@ -116,6 +116,15 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(ex.Message, Is.EqualTo("Unknown section `someOtherSection`."));
         }
 
+        [Test]
+        public void Read_GivenEmptySource_ThSrowsInvalidYamlSourceFormat()
+        {
+            var ex = Assert.Throws<InvalidYamlSourceFormat>(() => Read(string.Empty));
+
+            Assert.That(ex.Message, Is.EqualTo("Empty YAML source. Cannot read configuration."));
+        }
+
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
