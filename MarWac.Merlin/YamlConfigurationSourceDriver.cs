@@ -11,6 +11,8 @@ namespace MarWac.Merlin
     /// </summary>
     public class YamlConfigurationSourceDriver
     {
+        private const string ParametersSectionName = "parameters";
+
         /// <summary>
         /// Retrieves configuration from a YAML source stream.
         /// </summary>
@@ -23,8 +25,22 @@ namespace MarWac.Merlin
             YamlMappingNode root = ReadRoot(source);
             IEnumerable<YamlMappingNode> parameters = ReadParametersSequence(root);
             FillConfigurationWithParameters(configuration, parameters);
+            EnsureNoUnknownSectionProvided(root);
 
             return configuration;
+        }
+
+        private void EnsureNoUnknownSectionProvided(YamlMappingNode root)
+        {
+            var firstUnknownSection = root?.Children.Keys
+                                           .OfType<YamlScalarNode>()
+                                           .Where(x => x.Value != ParametersSectionName)
+                                           .Select(x => x.Value)
+                                           .FirstOrDefault();
+            if (firstUnknownSection != null)
+            {
+                throw new InvalidYamlSourceFormat($"Unknown section `{firstUnknownSection}`.");
+            }
         }
 
         private static YamlMappingNode ReadRoot(Stream source)
@@ -50,26 +66,14 @@ namespace MarWac.Merlin
 
         private static IEnumerable<YamlMappingNode> ReadParametersSequence(YamlMappingNode root)
         {
-            var firstUnknownSection = root?.Children.Keys
-                                           .OfType<YamlScalarNode>()
-                                           .Where(x => x.Value != "parameters")
-                                           .Select(x => x.Value)
-                                           .FirstOrDefault();
-            if (firstUnknownSection != null)
-            {
-                throw new InvalidYamlSourceFormat($"Unknown section `{firstUnknownSection}`.");
-            }
-
-            var parametersNode = root?.Children[new YamlScalarNode("parameters")] as YamlSequenceNode;
+            var parametersNode = root?.Children[new YamlScalarNode(ParametersSectionName)] as YamlSequenceNode;
 
             if (parametersNode == null)
             {
                 throw new InvalidYamlSourceFormat("Missing `parameters` node.");
             }
 
-            var parametersNodeChildrenAsMappings = parametersNode?.Children.OfType<YamlMappingNode>();
-
-            return parametersNodeChildrenAsMappings;
+            return parametersNode.Children.OfType<YamlMappingNode>();
         }
 
         private static void FillConfigurationWithParameters(Configuration configuration,
