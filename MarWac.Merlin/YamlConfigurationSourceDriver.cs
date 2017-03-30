@@ -23,27 +23,25 @@ namespace MarWac.Merlin
             var configuration = new Configuration();
 
             YamlMappingNode root = ReadRoot(source);
-            IEnumerable<YamlMappingNode> parameters = ReadParametersSequence(root);
-            FillConfigurationWithParameters(configuration, parameters);
+            BuildUpParameters(root, configuration);
             EnsureNoUnknownSectionProvided(root);
 
             return configuration;
         }
 
-        private void EnsureNoUnknownSectionProvided(YamlMappingNode root)
+        private static YamlMappingNode ReadRoot(Stream source)
         {
-            var firstUnknownSection = root?.Children.Keys
-                                           .OfType<YamlScalarNode>()
-                                           .Where(x => x.Value != ParametersSectionName)
-                                           .Select(x => x.Value)
-                                           .FirstOrDefault();
-            if (firstUnknownSection != null)
+            var yamlDoc = LoadYamlFromSource(source).Documents?.FirstOrDefault();
+
+            if (yamlDoc == null)
             {
-                throw new InvalidYamlSourceFormat($"Unknown section `{firstUnknownSection}`.");
+                throw new InvalidYamlSourceFormat("Empty YAML source. Cannot read configuration.");
             }
+
+            return yamlDoc.RootNode as YamlMappingNode;
         }
 
-        private static YamlMappingNode ReadRoot(Stream source)
+        private static YamlStream LoadYamlFromSource(Stream source)
         {
             var yaml = new YamlStream();
 
@@ -59,9 +57,7 @@ namespace MarWac.Merlin
                 }
             }
 
-            var root = yaml.Documents?.FirstOrDefault()?.RootNode as YamlMappingNode;
-
-            return root;
+            return yaml;
         }
 
         private static IEnumerable<YamlMappingNode> ReadParametersSequence(YamlMappingNode root)
@@ -76,9 +72,10 @@ namespace MarWac.Merlin
             return parametersNode.Children.OfType<YamlMappingNode>();
         }
 
-        private static void FillConfigurationWithParameters(Configuration configuration,
-            IEnumerable<YamlMappingNode> parameters)
+        private static void BuildUpParameters(YamlMappingNode root, Configuration configuration)
         {
+            IEnumerable<YamlMappingNode> parameters = ReadParametersSequence(root);
+
             if (parameters == null)
             {
                 return;
@@ -91,6 +88,19 @@ namespace MarWac.Merlin
                 string parameterValue = parameterAssignment.Value.ToString();
 
                 configuration.Parameters.Add(new ConfigurationParameter(parameterName, parameterValue));
+            }
+        }
+
+        private void EnsureNoUnknownSectionProvided(YamlMappingNode root)
+        {
+            var firstUnknownSection = root?.Children.Keys
+                                           .OfType<YamlScalarNode>()
+                                           .Where(x => x.Value != ParametersSectionName)
+                                           .Select(x => x.Value)
+                                           .FirstOrDefault();
+            if (firstUnknownSection != null)
+            {
+                throw new InvalidYamlSourceFormat($"Unknown section `{firstUnknownSection}`.");
             }
         }
     }

@@ -117,7 +117,7 @@ namespace MarWac.Merlin.UnitTests
         }
 
         [Test]
-        public void Read_GivenEmptySource_ThSrowsInvalidYamlSourceFormat()
+        public void Read_GivenEmptySource_ThrowsInvalidYamlSourceFormat()
         {
             var ex = Assert.Throws<InvalidYamlSourceFormat>(() => Read(string.Empty));
 
