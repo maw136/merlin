@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 using NUnit.Framework;
+using YamlDotNet.Core;
 
 namespace MarWac.Merlin.UnitTests
 {
@@ -69,6 +70,17 @@ namespace MarWac.Merlin.UnitTests
                     - importLocation: //share/imports/");
 
             Assert.That(configuration.Parameters[1].Value, Is.EqualTo("//share/imports/"));
+        }
+
+        [Test]
+        public void Read_GivenInputWithWrongYamlSyntax_ThrowsSourceReadExceptionWithInnerYamlSemanticErrorException()
+        {
+            var ex = Assert.Throws<SourceReadException>(() => Read(@"---
+                parameters:
+                  - key
+                 - error"));
+
+            Assert.That(ex.InnerException, Is.TypeOf<SemanticErrorException>());
         }
 
         private static Configuration Read(string source)
