@@ -12,6 +12,8 @@ namespace MarWac.Merlin
     public class YamlConfigurationSourceDriver
     {
         private const string ParametersSectionName = "parameters";
+        private const string ParameterValuePropertyName = "value";
+        private const string ParameterDescriptionPropertyName = "description";
 
         /// <summary>
         /// Retrieves configuration from a YAML source stream.
@@ -67,13 +69,13 @@ namespace MarWac.Merlin
 
         private static IEnumerable<YamlMappingNode> ReadParametersSequence(YamlMappingNode root)
         {
-            YamlNode parametersNode;
-            root.Children.TryGetValue(new YamlScalarNode(ParametersSectionName), out parametersNode);
-            YamlSequenceNode parametersSequence = parametersNode as YamlSequenceNode;
+            YamlNode parametersSectionNode;
+            root.Children.TryGetValue(ParametersSectionName, out parametersSectionNode);
+            YamlSequenceNode parametersSequence = parametersSectionNode as YamlSequenceNode;
 
             if (parametersSequence == null)
             {
-                throw new InvalidYamlSourceFormatException("Missing `parameters` section.");
+                throw new InvalidYamlSourceFormatException($"Missing `{ParametersSectionName}` section.");
             }
 
             return parametersSequence.Children.OfType<YamlMappingNode>();
@@ -81,52 +83,58 @@ namespace MarWac.Merlin
 
         private static void BuildUpParameters(YamlMappingNode root, Configuration configuration)
         {
-            IEnumerable<YamlMappingNode> parameters = ReadParametersSequence(root);
-
-            if (parameters == null)
+            foreach (YamlMappingNode parameterNode in ReadParametersSequence(root))
             {
-                return;
+                configuration.Parameters.Add(ReadConfigurationParameter(parameterNode));
+            }
+        }
+
+        private static ConfigurationParameter ReadConfigurationParameter(YamlMappingNode parameter)
+        {
+            KeyValuePair<YamlNode, YamlNode> parameterAssignment = parameter.Children.First();
+            string parameterName = parameterAssignment.Key.ToString();
+            YamlNode parameterDefinition = parameterAssignment.Value;
+
+            if (parameterDefinition is YamlScalarNode)
+            {
+                return ReadSimpleConfigurationParameter(parameterName, parameterDefinition);
+            }
+            if (parameterDefinition is YamlMappingNode)
+            {
+                return ReadComplexConfigurationParameter(parameterName, (YamlMappingNode) parameterDefinition);
             }
 
-            foreach (YamlMappingNode parameter in parameters)
+            return null;
+        }
+
+        private static ConfigurationParameter ReadSimpleConfigurationParameter(string parameterName,
+            YamlNode parameterDefinition)
+        {
+            return new ConfigurationParameter(parameterName, parameterDefinition.ToString());
+        }
+
+        private static ConfigurationParameter ReadComplexConfigurationParameter(string parameterName,
+            YamlMappingNode parameterDefinition)
+        {
+            YamlNode valueNode;
+            parameterDefinition.Children.TryGetValue(ParameterValuePropertyName, out valueNode);
+
+            YamlNode descriptionNode;
+            parameterDefinition.Children.TryGetValue(ParameterDescriptionPropertyName, out descriptionNode);
+
+            return new ConfigurationParameter(parameterName, valueNode?.ToString())
             {
-                KeyValuePair<YamlNode, YamlNode> parameterAssignment = parameter.Children.First();
-                string parameterName = parameterAssignment.Key.ToString();
-                YamlNode parameterDefinition = parameterAssignment.Value;
-
-                string parameterValue = null;
-                string parameterDescription = null;
-
-                if (parameterDefinition is YamlScalarNode)
-                {
-                    parameterValue = parameterDefinition.ToString();
-                }
-                else if (parameterDefinition is YamlMappingNode)
-                {
-                    var parameterProperties = parameterDefinition as YamlMappingNode;
-                    YamlNode valueNode;
-                    parameterProperties.Children.TryGetValue(new YamlScalarNode("value"), out valueNode);
-                    parameterValue = (valueNode as YamlScalarNode)?.Value;
-
-                    YamlNode descriptionNode;
-                    parameterProperties.Children.TryGetValue(new YamlScalarNode("description"), out descriptionNode);
-                    parameterDescription = (descriptionNode as YamlScalarNode)?.Value;
-                }
-
-                configuration.Parameters.Add(new ConfigurationParameter(parameterName, parameterValue)
-                {
-                    Description = parameterDescription
-                });
-            }
+                Description = descriptionNode?.ToString()
+            };
         }
 
         private void EnsureNoUnknownSectionProvided(YamlMappingNode root)
         {
             var firstUnknownSection = root.Children.Keys
-                                          .OfType<YamlScalarNode>()
-                                          .Where(x => x.Value != ParametersSectionName)
-                                          .Select(x => x.Value)
-                                          .FirstOrDefault();
+                .OfType<YamlScalarNode>()
+                .Where(x => x.Value != ParametersSectionName)
+                .Select(x => x.Value)
+                .FirstOrDefault();
             if (firstUnknownSection != null)
             {
                 throw new InvalidYamlSourceFormatException($"Unknown section `{firstUnknownSection}`.");

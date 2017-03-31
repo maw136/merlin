@@ -15,7 +15,7 @@ namespace MarWac.Merlin
         /// <summary>
         /// The value of the configuration parameter
         /// </summary>
-        public string Value { get; set; }
+        public string Value { get; private set; }
 
         /// <summary>
         /// The description of the configuration parameter
