@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace MarWac.Merlin
 {
@@ -13,28 +15,36 @@ namespace MarWac.Merlin
         public string Name { get; }
 
         /// <summary>
-        /// The value of the configuration parameter
+        /// The default value of the configuration parameter
         /// </summary>
-        public string Value { get; private set; }
+        public string DefaultValue { get; private set; }
 
         /// <summary>
         /// The description of the configuration parameter
         /// </summary>
         public string Description { get; set; }
 
-        public ConfigurationParameter(string name, string value)
+        /// <summary>
+        /// Represents values assignment per environments
+        /// </summary>
+        public IReadOnlyDictionary<ConfigurableEnvironment, string> Values { get; private set; }
+
+        public ConfigurationParameter(string name, string defaultValue,
+            IDictionary<ConfigurableEnvironment, string> values = null)
         {
             if (string.IsNullOrEmpty(name))
             {
                 throw new ArgumentException("Name cannot be null or empty.", nameof(name));
             }
-            if (string.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(defaultValue))
             {
-                throw new ArgumentException("Value cannot be null or empty.", nameof(value));
+                throw new ArgumentException("DefaultValue cannot be null or empty.", nameof(defaultValue));
             }
 
             Name = name;
-            Value = value;
+            DefaultValue = defaultValue;
+            Values = new ReadOnlyDictionary<ConfigurableEnvironment, string>(
+                values ?? new Dictionary<ConfigurableEnvironment, string>());
         }
     }
 }

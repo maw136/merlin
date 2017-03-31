@@ -25,7 +25,7 @@ namespace MarWac.Merlin.UnitTests
                 parameters:
                     - callTimeoutSeconds: 15");
 
-            Assert.That(configuration.Parameters[0].Value, Is.EqualTo("15"));
+            Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("15"));
         }
 
         [Test]
@@ -47,7 +47,7 @@ namespace MarWac.Merlin.UnitTests
                     - callTimeoutSeconds: 15
                     - importLocation: //share/imports/");
 
-            Assert.That(configuration.Parameters[0].Value, Is.EqualTo("15"));
+            Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("15"));
         }
 
         [Test]
@@ -69,7 +69,7 @@ namespace MarWac.Merlin.UnitTests
                     - callTimeoutSeconds: 15
                     - importLocation: //share/imports/");
 
-            Assert.That(configuration.Parameters[1].Value, Is.EqualTo("//share/imports/"));
+            Assert.That(configuration.Parameters[1].DefaultValue, Is.EqualTo("//share/imports/"));
         }
 
         [Test]
@@ -155,7 +155,7 @@ namespace MarWac.Merlin.UnitTests
                         description: How long the system waits for the response to come
                         value: 15");
 
-            Assert.That(configuration.Parameters[0].Value, Is.EqualTo("15"));
+            Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("15"));
         }
 
         [Test]
@@ -169,6 +169,55 @@ namespace MarWac.Merlin.UnitTests
 
             Assert.That(configuration.Parameters[0].Description, Is.EqualTo("How long the system waits " +
                                                                             "for the response to come"));
+        }
+
+        [Test]
+        public void Read_GivenParameterWithDistinctValuesPerEnvironments_ReadsParameterAssigningValuesPerEnvironments()
+        {
+            var configuration = Read(@"---
+                environments:
+                    - dev
+                    - test
+
+                parameters:
+                    - callTimeoutSeconds: 
+                        value: 
+                            - dev: 20
+                            - test: 30");
+
+            Assert.That(configuration.Parameters[0].Values[new ConfigurableEnvironment("dev")], Is.EqualTo("20"));
+            Assert.That(configuration.Parameters[0].Values[new ConfigurableEnvironment("test")], Is.EqualTo("30"));
+        }
+
+        [Test]
+        public void Read_GivenParameterWithSpecificValuePerEnvironment_ReadsDefaultValueNull()
+        {
+            var configuration = Read(@"---
+                environments:
+                    - local
+
+                parameters:
+                    - callTimeoutSeconds: 
+                        value: 
+                            - local: 15");
+
+            Assert.That(configuration.Parameters[0].DefaultValue, Is.Null);
+        }
+
+        [Test]
+        public void Read_GivenParameterWithSameValuePerEnvironments_ReadsParameterDefaultValueOnly()
+        {
+            var configuration = Read(@"---
+                environments:
+                    - dev
+                    - test
+
+                parameters:
+                    - callTimeoutSeconds: 15");
+
+            Assert.That(configuration.Parameters[0].Values[new ConfigurableEnvironment("dev")], Is.Null);
+            Assert.That(configuration.Parameters[0].Values[new ConfigurableEnvironment("test")], Is.Null);
+            Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("15"));
         }
 
         private static Configuration Read(string source)
