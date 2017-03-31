@@ -92,9 +92,31 @@ namespace MarWac.Merlin
             {
                 KeyValuePair<YamlNode, YamlNode> parameterAssignment = parameter.Children.First();
                 string parameterName = parameterAssignment.Key.ToString();
-                string parameterValue = parameterAssignment.Value.ToString();
+                YamlNode parameterDefinition = parameterAssignment.Value;
 
-                configuration.Parameters.Add(new ConfigurationParameter(parameterName, parameterValue));
+                string parameterValue = null;
+                string parameterDescription = null;
+
+                if (parameterDefinition is YamlScalarNode)
+                {
+                    parameterValue = parameterDefinition.ToString();
+                }
+                else if (parameterDefinition is YamlMappingNode)
+                {
+                    var parameterProperties = parameterDefinition as YamlMappingNode;
+                    YamlNode valueNode;
+                    parameterProperties.Children.TryGetValue(new YamlScalarNode("value"), out valueNode);
+                    parameterValue = (valueNode as YamlScalarNode)?.Value;
+
+                    YamlNode descriptionNode;
+                    parameterProperties.Children.TryGetValue(new YamlScalarNode("description"), out descriptionNode);
+                    parameterDescription = (descriptionNode as YamlScalarNode)?.Value;
+                }
+
+                configuration.Parameters.Add(new ConfigurationParameter(parameterName, parameterValue)
+                {
+                    Description = parameterDescription
+                });
             }
         }
 
