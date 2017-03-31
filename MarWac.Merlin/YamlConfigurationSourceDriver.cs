@@ -104,7 +104,7 @@ namespace MarWac.Merlin
                 return ReadComplexConfigurationParameter(parameterName, (YamlMappingNode) parameterDefinition);
             }
 
-            return null;
+            return null; // TODO: should throw
         }
 
         private static ConfigurationParameter ReadSimpleConfigurationParameter(string parameterName,
@@ -116,13 +116,50 @@ namespace MarWac.Merlin
         private static ConfigurationParameter ReadComplexConfigurationParameter(string parameterName,
             YamlMappingNode parameterDefinition)
         {
-            YamlNode valueNode;
-            parameterDefinition.Children.TryGetValue(ParameterValuePropertyName, out valueNode);
-
             YamlNode descriptionNode;
             parameterDefinition.Children.TryGetValue(ParameterDescriptionPropertyName, out descriptionNode);
 
-            return new ConfigurationParameter(parameterName, valueNode?.ToString())
+            YamlNode values;
+            parameterDefinition.Children.TryGetValue(ParameterValuePropertyName, out values);
+
+            if (values is YamlScalarNode)
+            {
+                return new ConfigurationParameter(parameterName, values.ToString())
+                {
+                    Description = descriptionNode?.ToString()
+                };
+            }
+            if (values is YamlSequenceNode)
+            {
+                return ReadMultipleEnvironmentsConfiguredParameter(parameterName, (YamlSequenceNode) values,
+                    descriptionNode);
+            }
+
+            return null; // TODO: should throw
+        }
+
+        private static ConfigurationParameter ReadMultipleEnvironmentsConfiguredParameter(string parameterName,
+            YamlSequenceNode valueNodes, YamlNode descriptionNode)
+        {
+            string defaultValue = null;
+            var valueMapping = new Dictionary<ConfigurableEnvironment, string>();
+
+            foreach (var valueNode in valueNodes.OfType<YamlMappingNode>())
+            {
+                KeyValuePair<YamlNode, YamlNode> valueAssignment = valueNode.Children.First();
+                var environmentName = valueAssignment.Key.ToString();
+                var value = valueAssignment.Value.ToString();
+                if (environmentName == "default") // TODO: to const field
+                {
+                    defaultValue = value;
+                }
+                else
+                {
+                    valueMapping[new ConfigurableEnvironment(environmentName)] = value;
+                }
+            }
+
+            return new ConfigurationParameter(parameterName, defaultValue, valueMapping)
             {
                 Description = descriptionNode?.ToString()
             };
@@ -132,7 +169,7 @@ namespace MarWac.Merlin
         {
             var firstUnknownSection = root.Children.Keys
                 .OfType<YamlScalarNode>()
-                .Where(x => x.Value != ParametersSectionName)
+                .Where(x => x.Value != ParametersSectionName && x.Value != "environments") // TODO: to field
                 .Select(x => x.Value)
                 .FirstOrDefault();
             if (firstUnknownSection != null)

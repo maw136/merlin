@@ -215,8 +215,8 @@ namespace MarWac.Merlin.UnitTests
                 parameters:
                     - callTimeoutSeconds: 15");
 
-            Assert.That(configuration.Parameters[0].Values[new ConfigurableEnvironment("dev")], Is.Null);
-            Assert.That(configuration.Parameters[0].Values[new ConfigurableEnvironment("test")], Is.Null);
+            Assert.That(configuration.Parameters[0].Values.ContainsKey(new ConfigurableEnvironment("dev")), Is.False);
+            Assert.That(configuration.Parameters[0].Values.ContainsKey(new ConfigurableEnvironment("test")), Is.False);
             Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("15"));
         }
 

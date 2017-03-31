@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace MarWac.Merlin
 {
@@ -36,15 +37,16 @@ namespace MarWac.Merlin
             {
                 throw new ArgumentException("Name cannot be null or empty.", nameof(name));
             }
-            if (string.IsNullOrEmpty(defaultValue))
-            {
-                throw new ArgumentException("DefaultValue cannot be null or empty.", nameof(defaultValue));
-            }
 
             Name = name;
             DefaultValue = defaultValue;
             Values = new ReadOnlyDictionary<ConfigurableEnvironment, string>(
                 values ?? new Dictionary<ConfigurableEnvironment, string>());
+
+            if (string.IsNullOrEmpty(defaultValue) && !Values.Any())
+            {
+                throw new ArgumentException("Either default value or value mapping per environment must be non empty.");
+            }
         }
     }
 }
