@@ -134,6 +134,42 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(ex.Message, Is.EqualTo("Empty YAML source. Cannot read configuration."));
         }
 
+        [Test]
+        public void Read_GivenParameterWithDescription_ReadsParameterNameCorrectly()
+        {
+            var configuration = Read(@"---
+                parameters:
+                    - callTimeoutSeconds:
+                        description: How long the system waits for the response to come
+                        value: 15");
+
+            Assert.That(configuration.Parameters[0].Name, Is.EqualTo("callTimeoutSeconds"));
+        }
+
+        [Test]
+        public void Read_GivenParameterWithDescription_ReadsParameterValueCorrectly()
+        {
+            var configuration = Read(@"---
+                parameters:
+                    - callTimeoutSeconds:
+                        description: How long the system waits for the response to come
+                        value: 15");
+
+            Assert.That(configuration.Parameters[0].Value, Is.EqualTo("15"));
+        }
+
+        [Test]
+        public void Read_GivenParameterWithDescription_ReadsParameterDescriptionCorrectly()
+        {
+            var configuration = Read(@"---
+                parameters:
+                    - callTimeoutSeconds:
+                        description: How long the system waits for the response to come
+                        value: 15");
+
+            Assert.That(configuration.Parameters[0].Description, Is.EqualTo("How long the system waits " +
+                                                                            "for the response to come"));
+        }
 
         private static Configuration Read(string source)
         {
