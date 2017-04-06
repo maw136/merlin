@@ -220,6 +220,23 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("15"));
         }
 
+        [Test]
+        public void Read_GivenParameterWithDefaultValueAlongWithEnvironments_ReadsParameterDefaultValueAlso()
+        {
+            var configuration = Read(@"---
+                environments:
+                    - dev
+                    - test
+
+                parameters:
+                    - callTimeoutSeconds:
+                        value:
+                          - dev: 50
+                          - default: 10");
+
+            Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("10"));
+        }
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
