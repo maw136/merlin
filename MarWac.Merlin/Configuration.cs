@@ -12,8 +12,14 @@ namespace MarWac.Merlin
         /// </summary>
         public Configuration()
         {
+            Environments = new List<ConfigurableEnvironment>();
             Parameters = new List<ConfigurationParameter>();    
         }
+
+        /// <summary>
+        /// All enviornments defined in the configuration
+        /// </summary>
+        internal IList<ConfigurableEnvironment> Environments { get; }
 
         /// <summary>
         /// All parameters defined in the configuration

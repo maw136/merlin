@@ -27,6 +27,7 @@ namespace MarWac.Merlin
             var configuration = new Configuration();
 
             YamlMappingNode root = ReadRoot(source);
+            BuildUpEnvironments(root, configuration);
             BuildUpParameters(root, configuration);
             EnsureNoUnknownSectionProvided(root);
 
@@ -69,6 +70,15 @@ namespace MarWac.Merlin
             return yaml;
         }
 
+        private static IEnumerable<YamlScalarNode> ReadEnvironmentsSequence(YamlMappingNode root)
+        {
+            YamlNode environmentsSectionNode;
+            root.Children.TryGetValue(EnvironmentsSectionName, out environmentsSectionNode);
+            YamlSequenceNode environmentsSequence = environmentsSectionNode as YamlSequenceNode;
+
+            return environmentsSequence?.Children.OfType<YamlScalarNode>() ?? Enumerable.Empty<YamlScalarNode>();
+        }
+
         private static IEnumerable<YamlMappingNode> ReadParametersSequence(YamlMappingNode root)
         {
             YamlNode parametersSectionNode;
@@ -83,15 +93,24 @@ namespace MarWac.Merlin
             return parametersSequence.Children.OfType<YamlMappingNode>();
         }
 
+        private void BuildUpEnvironments(YamlMappingNode root, Configuration configuration)
+        {
+            foreach (YamlScalarNode environmentNode in ReadEnvironmentsSequence(root))
+            {
+                configuration.Environments.Add(new ConfigurableEnvironment(environmentNode.Value));
+            }
+        }
+
         private static void BuildUpParameters(YamlMappingNode root, Configuration configuration)
         {
             foreach (YamlMappingNode parameterNode in ReadParametersSequence(root))
             {
-                configuration.Parameters.Add(ReadConfigurationParameter(parameterNode));
+                configuration.Parameters.Add(ReadConfigurationParameter(parameterNode, configuration.Environments));
             }
         }
 
-        private static ConfigurationParameter ReadConfigurationParameter(YamlMappingNode parameter)
+        private static ConfigurationParameter ReadConfigurationParameter(YamlMappingNode parameter, 
+            IList<ConfigurableEnvironment> configurationEnvironments)
         {
             KeyValuePair<YamlNode, YamlNode> parameterAssignment = parameter.Children.First();
             string parameterName = parameterAssignment.Key.ToString();
@@ -103,7 +122,8 @@ namespace MarWac.Merlin
             }
             if (parameterDefinition is YamlMappingNode)
             {
-                return ReadComplexConfigurationParameter(parameterName, (YamlMappingNode) parameterDefinition);
+                return ReadComplexConfigurationParameter(parameterName, (YamlMappingNode) parameterDefinition, 
+                    configurationEnvironments);
             }
 
             throw new InvalidYamlSourceFormatException($"Invalid `{parameterName}` parameter definition.");
@@ -115,8 +135,8 @@ namespace MarWac.Merlin
             return new ConfigurationParameter(parameterName, parameterDefinition.ToString());
         }
 
-        private static ConfigurationParameter ReadComplexConfigurationParameter(string parameterName,
-            YamlMappingNode parameterDefinition)
+        private static ConfigurationParameter ReadComplexConfigurationParameter(string parameterName, 
+            YamlMappingNode parameterDefinition, IList<ConfigurableEnvironment> configurationEnvironments)
         {
             YamlNode descriptionNode;
             parameterDefinition.Children.TryGetValue(ParameterDescriptionPropertyName, out descriptionNode);
@@ -135,21 +155,23 @@ namespace MarWac.Merlin
             if (sequenceOfValuesNode != null)
             {
                 return ReadMultipleEnvironmentsConfiguredParameter(parameterName, sequenceOfValuesNode,
-                    descriptionNode);
+                    descriptionNode, configurationEnvironments);
             }
 
             throw new InvalidYamlSourceFormatException($"Invalid value definition for parameter `{parameterName}`.");
         }
 
-        private static ConfigurationParameter ReadMultipleEnvironmentsConfiguredParameter(string parameterName,
-            YamlSequenceNode valueNodes, YamlNode descriptionNode)
+        private static ConfigurationParameter ReadMultipleEnvironmentsConfiguredParameter(string parameterName, 
+            YamlSequenceNode valueNodes, YamlNode descriptionNode, 
+            IList<ConfigurableEnvironment> configurationEnvironments)
         {
             string defaultValue = null;
             var valueMapping = new Dictionary<ConfigurableEnvironment, string>();
 
             foreach (var valueNode in valueNodes.OfType<YamlMappingNode>())
             {
-                MapDefaultAndEnvironmentValues(valueNode, valueMapping, out defaultValue);
+                MapDefaultAndEnvironmentValues(parameterName, valueNode, valueMapping, out defaultValue, 
+                    new HashSet<ConfigurableEnvironment>(configurationEnvironments));
             }
 
             return new ConfigurationParameter(parameterName, defaultValue, valueMapping)
@@ -158,12 +180,14 @@ namespace MarWac.Merlin
             };
         }
 
-        private static void MapDefaultAndEnvironmentValues(YamlMappingNode valueNode, 
-            IDictionary<ConfigurableEnvironment, string> valueMapping, out string defaultValue)
+        private static void MapDefaultAndEnvironmentValues(string parameterName, YamlMappingNode valueNode, 
+            IDictionary<ConfigurableEnvironment, string> valueMapping, out string defaultValue, 
+            ISet<ConfigurableEnvironment> definedEnvironments)
         {
             defaultValue = null;
             KeyValuePair<YamlNode, YamlNode> valueAssignment = valueNode.Children.First();
             var environmentName = valueAssignment.Key.ToString();
+            var environment = new ConfigurableEnvironment(environmentName);
             var value = valueAssignment.Value.ToString();
 
             if (environmentName == ParameterDefaultValuePropertyName)
@@ -172,7 +196,14 @@ namespace MarWac.Merlin
             }
             else
             {
-                valueMapping[new ConfigurableEnvironment(environmentName)] = value; // TODO: check if known
+                if (!definedEnvironments.Contains(environment))
+                {
+                    throw new InvalidYamlSourceFormatException($"Unknown environment `{environmentName}` for which " +
+                                                               $"parameter `{parameterName}` is configured.");
+                }
+
+                
+                valueMapping[environment] = value;
             }
         }
 
