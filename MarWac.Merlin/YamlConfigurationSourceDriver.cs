@@ -106,7 +106,7 @@ namespace MarWac.Merlin
                 return ReadComplexConfigurationParameter(parameterName, (YamlMappingNode) parameterDefinition);
             }
 
-            return null; // TODO: should throw
+            throw new InvalidYamlSourceFormatException($"Invalid `{parameterName}` parameter definition.");
         }
 
         private static ConfigurationParameter ReadSimpleConfigurationParameter(string parameterName,
@@ -138,7 +138,7 @@ namespace MarWac.Merlin
                     descriptionNode);
             }
 
-            return null; // TODO: should throw
+            throw new InvalidYamlSourceFormatException($"Invalid value definition for parameter `{parameterName}`.");
         }
 
         private static ConfigurationParameter ReadMultipleEnvironmentsConfiguredParameter(string parameterName,
