@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AnalyzeParams>
+  <TargetExecutable>./packages/NUnit.ConsoleRunner.3.6.1/tools/nunit3-console.exe</TargetExecutable>
+  <TargetArguments>MarWac.Merlin.UnitTests/bin/debug/MarWac.Merlin.UnitTests.dll</TargetArguments>
+  <TargetWorkingDir>.</TargetWorkingDir>
+  <Output>Coverage.html</Output>
+  <ReportType>HTML</ReportType>
+  <Filters>
+    <IncludeFilters>
+      <FilterEntry>
+        <ModuleMask>MarWac.Merlin</ModuleMask>
+      </FilterEntry>
+    </IncludeFilters>
+  </Filters>
+</AnalyzeParams>

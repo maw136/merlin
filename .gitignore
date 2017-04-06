@@ -107,6 +107,8 @@ _TeamCity*
 
 # DotCover is a Code Coverage Tool
 *.dotCover
+Coverage/
+Coverage.html
 
 # NCrunch
 _NCrunch_*
