@@ -260,6 +260,22 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(ex.Message, Is.EqualTo("Invalid `callTimeoutSeconds` parameter definition."));
         }
 
+        [Test]
+        public void Read_GivenParameterValueDefinedForUnknownEnvironment_ThrowsInvalidYamlSourceFormatException()
+        {
+            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => Read(@"---
+                environments:
+                    - local
+
+                parameters:
+                    - callTimeoutSeconds:
+                        value: 
+                            - test: 10"));
+
+            Assert.That(ex.Message, Is.EqualTo("Unknown environment `test` for which parameter `callTimeoutSeconds` " +
+                                               "is configured."));
+        }
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
