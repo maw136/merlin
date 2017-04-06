@@ -237,6 +237,29 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("10"));
         }
 
+        [Test]
+        public void Read_GivenParameterWithMalformedValueNode_ThrowsInvalidYamlSourceFormatException()
+        {
+            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => Read(@"---
+                parameters:
+                    - callTimeoutSeconds:
+                        value:
+                          default: 15"));
+
+            Assert.That(ex.Message, Is.EqualTo("Invalid value definition for parameter `callTimeoutSeconds`."));
+        }
+
+        [Test]
+        public void Read_GivenParameterWithMalformedProperties_ThrowsInvalidYamlSourceFormatException()
+        {
+            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => Read(@"---
+                parameters:
+                    - callTimeoutSeconds:
+                        - value: 15"));
+
+            Assert.That(ex.Message, Is.EqualTo("Invalid `callTimeoutSeconds` parameter definition."));
+        }
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
