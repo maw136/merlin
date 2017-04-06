@@ -14,6 +14,8 @@ namespace MarWac.Merlin
         private const string ParametersSectionName = "parameters";
         private const string ParameterValuePropertyName = "value";
         private const string ParameterDescriptionPropertyName = "description";
+        private const string ParameterDefaultValuePropertyName = "default";
+        private const string EnvironmentsSectionName = "environments";
 
         /// <summary>
         /// Retrieves configuration from a YAML source stream.
@@ -129,9 +131,10 @@ namespace MarWac.Merlin
                     Description = descriptionNode?.ToString()
                 };
             }
-            if (values is YamlSequenceNode)
+            var sequenceOfValuesNode = values as YamlSequenceNode;
+            if (sequenceOfValuesNode != null)
             {
-                return ReadMultipleEnvironmentsConfiguredParameter(parameterName, (YamlSequenceNode) values,
+                return ReadMultipleEnvironmentsConfiguredParameter(parameterName, sequenceOfValuesNode,
                     descriptionNode);
             }
 
@@ -146,17 +149,7 @@ namespace MarWac.Merlin
 
             foreach (var valueNode in valueNodes.OfType<YamlMappingNode>())
             {
-                KeyValuePair<YamlNode, YamlNode> valueAssignment = valueNode.Children.First();
-                var environmentName = valueAssignment.Key.ToString();
-                var value = valueAssignment.Value.ToString();
-                if (environmentName == "default") // TODO: to const field
-                {
-                    defaultValue = value;
-                }
-                else
-                {
-                    valueMapping[new ConfigurableEnvironment(environmentName)] = value;
-                }
+                MapDefaultAndEnvironmentValues(valueNode, valueMapping, out defaultValue);
             }
 
             return new ConfigurationParameter(parameterName, defaultValue, valueMapping)
@@ -165,13 +158,32 @@ namespace MarWac.Merlin
             };
         }
 
+        private static void MapDefaultAndEnvironmentValues(YamlMappingNode valueNode, 
+            IDictionary<ConfigurableEnvironment, string> valueMapping, out string defaultValue)
+        {
+            defaultValue = null;
+            KeyValuePair<YamlNode, YamlNode> valueAssignment = valueNode.Children.First();
+            var environmentName = valueAssignment.Key.ToString();
+            var value = valueAssignment.Value.ToString();
+
+            if (environmentName == ParameterDefaultValuePropertyName)
+            {
+                defaultValue = value;
+            }
+            else
+            {
+                valueMapping[new ConfigurableEnvironment(environmentName)] = value; // TODO: check if known
+            }
+        }
+
         private void EnsureNoUnknownSectionProvided(YamlMappingNode root)
         {
             var firstUnknownSection = root.Children.Keys
                 .OfType<YamlScalarNode>()
-                .Where(x => x.Value != ParametersSectionName && x.Value != "environments") // TODO: to field
+                .Where(x => x.Value != ParametersSectionName && x.Value != EnvironmentsSectionName)
                 .Select(x => x.Value)
                 .FirstOrDefault();
+
             if (firstUnknownSection != null)
             {
                 throw new InvalidYamlSourceFormatException($"Unknown section `{firstUnknownSection}`.");

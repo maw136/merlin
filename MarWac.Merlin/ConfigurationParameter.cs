@@ -28,7 +28,7 @@ namespace MarWac.Merlin
         /// <summary>
         /// Represents values assignment per environments
         /// </summary>
-        public IReadOnlyDictionary<ConfigurableEnvironment, string> Values { get; private set; }
+        public IReadOnlyDictionary<ConfigurableEnvironment, string> Values { get; }
 
         public ConfigurationParameter(string name, string defaultValue,
             IDictionary<ConfigurableEnvironment, string> values = null)
