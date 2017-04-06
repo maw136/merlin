@@ -11,11 +11,11 @@ namespace MarWac.Merlin
     /// </summary>
     public class YamlConfigurationSourceDriver
     {
+        private const string EnvironmentsSectionName = "environments";
         private const string ParametersSectionName = "parameters";
         private const string ParameterValuePropertyName = "value";
         private const string ParameterDescriptionPropertyName = "description";
         private const string ParameterDefaultValuePropertyName = "default";
-        private const string EnvironmentsSectionName = "environments";
 
         /// <summary>
         /// Retrieves configuration from a YAML source stream.
@@ -24,200 +24,211 @@ namespace MarWac.Merlin
         /// <returns>Configuration instance filled with data from the YAML source</returns>
         public Configuration Read(Stream source)
         {
-            var configuration = new Configuration();
-
-            YamlMappingNode root = ReadRoot(source);
-            BuildUpEnvironments(root, configuration);
-            BuildUpParameters(root, configuration);
-            EnsureNoUnknownSectionProvided(root);
-
-            return configuration;
+            return new Reader(source).Read();
         }
 
-        private static YamlMappingNode ReadRoot(Stream source)
+        private class Reader
         {
-            var yamlDoc = LoadYamlFromSource(source).Documents?.FirstOrDefault();
-            if (yamlDoc == null)
+            private readonly YamlMappingNode _root;
+            private readonly Configuration _configuration;
+
+            public Reader(Stream source)
             {
-                throw new InvalidYamlSourceFormatException("Empty YAML source. Cannot read configuration.");
+                _configuration = new Configuration();
+                _root = ReadRoot(source);
             }
 
-            var rootAsMapping = yamlDoc.RootNode as YamlMappingNode;
-            if (rootAsMapping == null)
+            public Configuration Read()
             {
-                throw new InvalidYamlSourceFormatException("No valid section provided.");
+                BuildUpEnvironments();
+                BuildUpParameters();
+                EnsureNoUnknownSectionProvided();
+
+                return _configuration;
             }
 
-            return rootAsMapping;
-        }
-
-        private static YamlStream LoadYamlFromSource(Stream source)
-        {
-            var yaml = new YamlStream();
-
-            using (var reader = new StreamReader(source))
+            private static YamlMappingNode ReadRoot(Stream source)
             {
-                try
+                var yamlDoc = LoadYamlFromSource(source).Documents?.FirstOrDefault();
+                if (yamlDoc == null)
                 {
-                    yaml.Load(reader);
+                    throw new InvalidYamlSourceFormatException("Empty YAML source. Cannot read configuration.");
                 }
-                catch (SemanticErrorException ex)
+
+                var rootAsMapping = yamlDoc.RootNode as YamlMappingNode;
+                if (rootAsMapping == null)
                 {
-                    throw new SourceReadException("Invalid YAML syntax in configuration source provided.", ex);
+                    throw new InvalidYamlSourceFormatException("No valid section provided.");
+                }
+
+                return rootAsMapping;
+            }
+
+            private static YamlStream LoadYamlFromSource(Stream source)
+            {
+                var yaml = new YamlStream();
+
+                using (var reader = new StreamReader(source))
+                {
+                    try
+                    {
+                        yaml.Load(reader);
+                    }
+                    catch (SemanticErrorException ex)
+                    {
+                        throw new SourceReadException("Invalid YAML syntax in configuration source provided.", ex);
+                    }
+                }
+
+                return yaml;
+            }
+
+            private IEnumerable<YamlScalarNode> ReadEnvironmentsSequence()
+            {
+                YamlNode environmentsSectionNode;
+                _root.Children.TryGetValue(EnvironmentsSectionName, out environmentsSectionNode);
+                YamlSequenceNode environmentsSequence = environmentsSectionNode as YamlSequenceNode;
+
+                return environmentsSequence?.Children.OfType<YamlScalarNode>() ?? Enumerable.Empty<YamlScalarNode>();
+            }
+
+            private IEnumerable<YamlMappingNode> ReadParametersSequence()
+            {
+                YamlNode parametersSectionNode;
+                _root.Children.TryGetValue(ParametersSectionName, out parametersSectionNode);
+                YamlSequenceNode parametersSequence = parametersSectionNode as YamlSequenceNode;
+
+                if (parametersSequence == null)
+                {
+                    throw new InvalidYamlSourceFormatException($"Missing `{ParametersSectionName}` section.");
+                }
+
+                return parametersSequence.Children.OfType<YamlMappingNode>();
+            }
+
+            private void BuildUpEnvironments()
+            {
+                foreach (YamlScalarNode environmentNode in ReadEnvironmentsSequence())
+                {
+                    _configuration.Environments.Add(new ConfigurableEnvironment(environmentNode.Value));
                 }
             }
 
-            return yaml;
-        }
-
-        private static IEnumerable<YamlScalarNode> ReadEnvironmentsSequence(YamlMappingNode root)
-        {
-            YamlNode environmentsSectionNode;
-            root.Children.TryGetValue(EnvironmentsSectionName, out environmentsSectionNode);
-            YamlSequenceNode environmentsSequence = environmentsSectionNode as YamlSequenceNode;
-
-            return environmentsSequence?.Children.OfType<YamlScalarNode>() ?? Enumerable.Empty<YamlScalarNode>();
-        }
-
-        private static IEnumerable<YamlMappingNode> ReadParametersSequence(YamlMappingNode root)
-        {
-            YamlNode parametersSectionNode;
-            root.Children.TryGetValue(ParametersSectionName, out parametersSectionNode);
-            YamlSequenceNode parametersSequence = parametersSectionNode as YamlSequenceNode;
-
-            if (parametersSequence == null)
+            private void BuildUpParameters()
             {
-                throw new InvalidYamlSourceFormatException($"Missing `{ParametersSectionName}` section.");
+                foreach (YamlMappingNode parameterNode in ReadParametersSequence())
+                {
+                    _configuration.Parameters.Add(ReadConfigurationParameter(parameterNode));
+                }
             }
 
-            return parametersSequence.Children.OfType<YamlMappingNode>();
-        }
-
-        private void BuildUpEnvironments(YamlMappingNode root, Configuration configuration)
-        {
-            foreach (YamlScalarNode environmentNode in ReadEnvironmentsSequence(root))
+            private ConfigurationParameter ReadConfigurationParameter(YamlMappingNode parameter)
             {
-                configuration.Environments.Add(new ConfigurableEnvironment(environmentNode.Value));
-            }
-        }
+                KeyValuePair<YamlNode, YamlNode> parameterAssignment = parameter.Children.First();
+                string parameterName = parameterAssignment.Key.ToString();
+                YamlNode parameterDefinition = parameterAssignment.Value;
 
-        private static void BuildUpParameters(YamlMappingNode root, Configuration configuration)
-        {
-            foreach (YamlMappingNode parameterNode in ReadParametersSequence(root))
-            {
-                configuration.Parameters.Add(ReadConfigurationParameter(parameterNode, configuration.Environments));
-            }
-        }
+                if (parameterDefinition is YamlScalarNode)
+                {
+                    return ReadSimpleConfigurationParameter(parameterName, parameterDefinition);
+                }
+                var parameterDefinitionMapping = parameterDefinition as YamlMappingNode;
+                if (parameterDefinitionMapping != null)
+                {
+                    return ReadComplexConfigurationParameter(parameterName, parameterDefinitionMapping);
+                }
 
-        private static ConfigurationParameter ReadConfigurationParameter(YamlMappingNode parameter, 
-            IList<ConfigurableEnvironment> configurationEnvironments)
-        {
-            KeyValuePair<YamlNode, YamlNode> parameterAssignment = parameter.Children.First();
-            string parameterName = parameterAssignment.Key.ToString();
-            YamlNode parameterDefinition = parameterAssignment.Value;
-
-            if (parameterDefinition is YamlScalarNode)
-            {
-                return ReadSimpleConfigurationParameter(parameterName, parameterDefinition);
-            }
-            if (parameterDefinition is YamlMappingNode)
-            {
-                return ReadComplexConfigurationParameter(parameterName, (YamlMappingNode) parameterDefinition, 
-                    configurationEnvironments);
+                throw new InvalidYamlSourceFormatException($"Invalid `{parameterName}` parameter definition.");
             }
 
-            throw new InvalidYamlSourceFormatException($"Invalid `{parameterName}` parameter definition.");
-        }
-
-        private static ConfigurationParameter ReadSimpleConfigurationParameter(string parameterName,
-            YamlNode parameterDefinition)
-        {
-            return new ConfigurationParameter(parameterName, parameterDefinition.ToString());
-        }
-
-        private static ConfigurationParameter ReadComplexConfigurationParameter(string parameterName, 
-            YamlMappingNode parameterDefinition, IList<ConfigurableEnvironment> configurationEnvironments)
-        {
-            YamlNode descriptionNode;
-            parameterDefinition.Children.TryGetValue(ParameterDescriptionPropertyName, out descriptionNode);
-
-            YamlNode values;
-            parameterDefinition.Children.TryGetValue(ParameterValuePropertyName, out values);
-
-            if (values is YamlScalarNode)
+            private ConfigurationParameter ReadSimpleConfigurationParameter(string parameterName,
+                YamlNode parameterDefinition)
             {
-                return new ConfigurationParameter(parameterName, values.ToString())
+                return new ConfigurationParameter(parameterName, parameterDefinition.ToString());
+            }
+
+            private ConfigurationParameter ReadComplexConfigurationParameter(string parameterName, 
+                YamlMappingNode parameterDefinition)
+            {
+                YamlNode descriptionNode;
+                parameterDefinition.Children.TryGetValue(ParameterDescriptionPropertyName, out descriptionNode);
+
+                YamlNode values;
+                parameterDefinition.Children.TryGetValue(ParameterValuePropertyName, out values);
+
+                if (values is YamlScalarNode)
+                {
+                    return new ConfigurationParameter(parameterName, values.ToString())
+                    {
+                        Description = descriptionNode?.ToString()
+                    };
+                }
+                var sequenceOfValuesNode = values as YamlSequenceNode;
+                if (sequenceOfValuesNode != null)
+                {
+                    return ReadMultipleEnvironmentsConfiguredParameter(parameterName, sequenceOfValuesNode, descriptionNode);
+                }
+
+                throw new InvalidYamlSourceFormatException($"Invalid value definition for parameter `{parameterName}`.");
+            }
+
+            private ConfigurationParameter ReadMultipleEnvironmentsConfiguredParameter(string parameterName, 
+                YamlSequenceNode valueNodes, YamlNode descriptionNode)
+            {
+                string defaultValue = null;
+                var valueMapping = new Dictionary<ConfigurableEnvironment, string>();
+
+                foreach (var valueNode in valueNodes.OfType<YamlMappingNode>())
+                {
+                    MapDefaultAndEnvironmentValues(parameterName, valueNode, valueMapping, out defaultValue, 
+                        new HashSet<ConfigurableEnvironment>(_configuration.Environments));
+                }
+
+                return new ConfigurationParameter(parameterName, defaultValue, valueMapping)
                 {
                     Description = descriptionNode?.ToString()
                 };
             }
-            var sequenceOfValuesNode = values as YamlSequenceNode;
-            if (sequenceOfValuesNode != null)
+
+            private void MapDefaultAndEnvironmentValues(string parameterName, YamlMappingNode valueNode, 
+                IDictionary<ConfigurableEnvironment, string> valueMapping, out string defaultValue, 
+                ISet<ConfigurableEnvironment> definedEnvironments)
             {
-                return ReadMultipleEnvironmentsConfiguredParameter(parameterName, sequenceOfValuesNode,
-                    descriptionNode, configurationEnvironments);
-            }
+                defaultValue = null;
+                KeyValuePair<YamlNode, YamlNode> valueAssignment = valueNode.Children.First();
+                var environmentName = valueAssignment.Key.ToString();
+                var environment = new ConfigurableEnvironment(environmentName);
+                var value = valueAssignment.Value.ToString();
 
-            throw new InvalidYamlSourceFormatException($"Invalid value definition for parameter `{parameterName}`.");
-        }
-
-        private static ConfigurationParameter ReadMultipleEnvironmentsConfiguredParameter(string parameterName, 
-            YamlSequenceNode valueNodes, YamlNode descriptionNode, 
-            IList<ConfigurableEnvironment> configurationEnvironments)
-        {
-            string defaultValue = null;
-            var valueMapping = new Dictionary<ConfigurableEnvironment, string>();
-
-            foreach (var valueNode in valueNodes.OfType<YamlMappingNode>())
-            {
-                MapDefaultAndEnvironmentValues(parameterName, valueNode, valueMapping, out defaultValue, 
-                    new HashSet<ConfigurableEnvironment>(configurationEnvironments));
-            }
-
-            return new ConfigurationParameter(parameterName, defaultValue, valueMapping)
-            {
-                Description = descriptionNode?.ToString()
-            };
-        }
-
-        private static void MapDefaultAndEnvironmentValues(string parameterName, YamlMappingNode valueNode, 
-            IDictionary<ConfigurableEnvironment, string> valueMapping, out string defaultValue, 
-            ISet<ConfigurableEnvironment> definedEnvironments)
-        {
-            defaultValue = null;
-            KeyValuePair<YamlNode, YamlNode> valueAssignment = valueNode.Children.First();
-            var environmentName = valueAssignment.Key.ToString();
-            var environment = new ConfigurableEnvironment(environmentName);
-            var value = valueAssignment.Value.ToString();
-
-            if (environmentName == ParameterDefaultValuePropertyName)
-            {
-                defaultValue = value;
-            }
-            else
-            {
-                if (!definedEnvironments.Contains(environment))
+                if (environmentName == ParameterDefaultValuePropertyName)
                 {
-                    throw new InvalidYamlSourceFormatException($"Unknown environment `{environmentName}` for which " +
-                                                               $"parameter `{parameterName}` is configured.");
+                    defaultValue = value;
                 }
-
+                else
+                {
+                    if (!definedEnvironments.Contains(environment))
+                    {
+                        throw new InvalidYamlSourceFormatException(
+                            $"Unknown environment `{environmentName}` for which parameter `{parameterName}` is " +
+                             "configured.");
+                    }
                 
-                valueMapping[environment] = value;
+                    valueMapping[environment] = value;
+                }
             }
-        }
 
-        private void EnsureNoUnknownSectionProvided(YamlMappingNode root)
-        {
-            var firstUnknownSection = root.Children.Keys
-                .OfType<YamlScalarNode>()
-                .Where(x => x.Value != ParametersSectionName && x.Value != EnvironmentsSectionName)
-                .Select(x => x.Value)
-                .FirstOrDefault();
-
-            if (firstUnknownSection != null)
+            private void EnsureNoUnknownSectionProvided()
             {
-                throw new InvalidYamlSourceFormatException($"Unknown section `{firstUnknownSection}`.");
+                var firstUnknownSection = _root.Children.Keys
+                    .OfType<YamlScalarNode>()
+                    .Where(x => x.Value != ParametersSectionName && x.Value != EnvironmentsSectionName)
+                    .Select(x => x.Value)
+                    .FirstOrDefault();
+
+                if (firstUnknownSection != null)
+                {
+                    throw new InvalidYamlSourceFormatException($"Unknown section `{firstUnknownSection}`.");
+                }
             }
         }
     }
