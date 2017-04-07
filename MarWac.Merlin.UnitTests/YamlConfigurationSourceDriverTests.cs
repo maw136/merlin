@@ -276,6 +276,22 @@ namespace MarWac.Merlin.UnitTests
                                                "is configured."));
         }
 
+        [Test]
+        public void Read_GivenTwoEnvironments_ReadsEnvironmentsCorrectly()
+        {
+            var configuration = Read(@"---
+                environments:
+                    - firstEnv
+                    - secondEnv
+
+                parameters:
+                    - callTimeoutSeconds:
+                        value: 10");
+
+            Assert.That(configuration.Environments[0].Name, Is.EqualTo("firstEnv"));
+            Assert.That(configuration.Environments[1].Name, Is.EqualTo("secondEnv"));
+        }
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));

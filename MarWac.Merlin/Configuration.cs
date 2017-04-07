@@ -19,7 +19,7 @@ namespace MarWac.Merlin
         /// <summary>
         /// All enviornments defined in the configuration
         /// </summary>
-        internal IList<ConfigurableEnvironment> Environments { get; }
+        public IList<ConfigurableEnvironment> Environments { get; }
 
         /// <summary>
         /// All parameters defined in the configuration
