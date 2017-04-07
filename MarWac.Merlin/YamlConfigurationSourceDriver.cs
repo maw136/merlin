@@ -54,13 +54,13 @@ namespace MarWac.Merlin
                 var yamlDoc = LoadYamlFromSource(source).Documents?.FirstOrDefault();
                 if (yamlDoc == null)
                 {
-                    throw new InvalidYamlSourceFormatException("Empty YAML source. Cannot read configuration.");
+                    throw new InvalidYamlConfigurationFormatException("Empty YAML source. Cannot read configuration.");
                 }
 
                 var rootAsMapping = yamlDoc.RootNode as YamlMappingNode;
                 if (rootAsMapping == null)
                 {
-                    throw new InvalidYamlSourceFormatException("No valid section provided.");
+                    throw new InvalidYamlConfigurationFormatException("No valid section provided.");
                 }
 
                 return rootAsMapping;
@@ -102,7 +102,7 @@ namespace MarWac.Merlin
 
                 if (parametersSequence == null)
                 {
-                    throw new InvalidYamlSourceFormatException($"Missing `{ParametersSectionName}` section.");
+                    throw new InvalidYamlConfigurationFormatException($"Missing `{ParametersSectionName}` section.");
                 }
 
                 return parametersSequence.Children.OfType<YamlMappingNode>();
@@ -116,13 +116,13 @@ namespace MarWac.Merlin
 
                     if (configurableEnvironment.Name == ParameterDefaultValuePropertyName)
                     {
-                        throw new InvalidYamlSourceFormatException(
+                        throw new InvalidYamlConfigurationFormatException(
                             $"`{ParameterDefaultValuePropertyName}` name is prohibited for environment name.");
                     }
 
                     if (_environmentsSet.Contains(configurableEnvironment))
                     {
-                        throw new InvalidYamlSourceFormatException(
+                        throw new InvalidYamlConfigurationFormatException(
                             $"Environment `{configurableEnvironment.Name}` cannot occur multiple times.");
                     }
 
@@ -138,7 +138,7 @@ namespace MarWac.Merlin
 
                     if (_parametersList.Any(p => p.Name == configurationParameter.Name))
                     {
-                        throw new InvalidYamlSourceFormatException(
+                        throw new InvalidYamlConfigurationFormatException(
                             $"Parameter `{configurationParameter.Name}` cannot occur multiple times.");
                     }
 
@@ -162,7 +162,7 @@ namespace MarWac.Merlin
                     return ReadComplexConfigurationParameter(parameterName, parameterDefinitionMapping);
                 }
 
-                throw new InvalidYamlSourceFormatException($"Invalid `{parameterName}` parameter definition.");
+                throw new InvalidYamlConfigurationFormatException($"Invalid `{parameterName}` parameter definition.");
             }
 
             private ConfigurationParameter ReadSimpleConfigurationParameter(string parameterName,
@@ -194,7 +194,7 @@ namespace MarWac.Merlin
                         descriptionNode);
                 }
 
-                throw new InvalidYamlSourceFormatException(
+                throw new InvalidYamlConfigurationFormatException(
                     $"Invalid value definition for parameter `{parameterName}`.");
             }
 
@@ -234,7 +234,7 @@ namespace MarWac.Merlin
                 {
                     if (!definedEnvironments.Contains(environment))
                     {
-                        throw new InvalidYamlSourceFormatException(
+                        throw new InvalidYamlConfigurationFormatException(
                             $"Unknown environment `{environmentName}` for which parameter `{parameterName}` is " +
                             "configured.");
                     }
@@ -253,7 +253,7 @@ namespace MarWac.Merlin
 
                 if (firstUnknownSection != null)
                 {
-                    throw new InvalidYamlSourceFormatException($"Unknown section `{firstUnknownSection}`.");
+                    throw new InvalidYamlConfigurationFormatException($"Unknown section `{firstUnknownSection}`.");
                 }
             }
         }

@@ -3,21 +3,21 @@
 namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
 {
     [TestFixture]
-    public class InvalidYamlSourceFormatTests
+    public class InvalidYamlConfigurationFormatTests
     {
         [Test]
-        public void Read_GivenInputWithNoValidSection_ThrowsInvalidYamlSourceFormatException()
+        public void Read_GivenInputWithNoValidSection_Throws()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => DriverWrapper.Read(@"---
+            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
                   - paramKey"));
 
             Assert.That(ex.Message, Is.EqualTo("No valid section provided."));
         }
 
         [Test]
-        public void Read_GivenInputWithoutParametersSection_ThrowsInvalidYamlSourceFormatException()
+        public void Read_GivenInputWithoutParametersSection_Throws()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => DriverWrapper.Read(@"
+            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"
                 awkwardSection:
                   - paramKey"));
 
@@ -25,9 +25,9 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         }
 
         [Test]
-        public void Read_GivenParameterUnderDifferentSection_ThrowsInvalidYamlSourceFormatException()
+        public void Read_GivenParameterUnderDifferentSection_Throws()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => DriverWrapper.Read(@"
+            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"
                 parameters:
                   - firstParam: 20
                 
@@ -38,17 +38,17 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         }
 
         [Test]
-        public void Read_GivenEmptySource_ThrowsInvalidYamlSourceFormatException()
+        public void Read_GivenEmptySource_Throws()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => DriverWrapper.Read(string.Empty));
+            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(string.Empty));
 
             Assert.That(ex.Message, Is.EqualTo("Empty YAML source. Cannot read configuration."));
         }
 
         [Test]
-        public void Read_GivenParameterWithMalformedValueNode_ThrowsInvalidYamlSourceFormatException()
+        public void Read_GivenParameterWithMalformedValueNode_Throws()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => DriverWrapper.Read(@"---
+            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
                 parameters:
                     - callTimeoutSeconds:
                         value:
@@ -58,9 +58,9 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         }
 
         [Test]
-        public void Read_GivenParameterWithMalformedProperties_ThrowsInvalidYamlSourceFormatException()
+        public void Read_GivenParameterWithMalformedProperties_Throws()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => DriverWrapper.Read(@"---
+            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
                 parameters:
                     - callTimeoutSeconds:
                         - value: 15"));
@@ -69,9 +69,9 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         }
 
         [Test]
-        public void Read_GivenParameterValueDefinedForUnknownEnvironment_ThrowsInvalidYamlSourceFormatException()
+        public void Read_GivenParameterValueDefinedForUnknownEnvironment_Throws()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => DriverWrapper.Read(@"---
+            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
                 environments:
                     - local
 
@@ -85,9 +85,9 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         }
 
         [Test]
-        public void Read_GivenDoubledEnvironments_ThrowsInvalidYamlSourceFormatException()
+        public void Read_GivenDoubledEnvironments_Throws()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => DriverWrapper.Read(@"---
+            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
                 environments:
                     - local
                     - local
@@ -99,9 +99,9 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         }
 
         [Test]
-        public void Read_GivenDoubledParameters_ThrowsInvalidYamlSourceFormatException()
+        public void Read_GivenDoubledParameters_Throws()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => DriverWrapper.Read(@"---
+            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
                 parameters:
                     - threadLimit: 20
                     - threadLimit: 10"));
@@ -110,9 +110,9 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         }
 
         [Test]
-        public void Read_GivenEnvironmentNamedDefault_ThrowsInvalidYamlSourceFormatException()
+        public void Read_GivenEnvironmentNamedDefault_Throws()
         {
-            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => DriverWrapper.Read(@"---
+            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
                 environments:
                     - default
                 

@@ -4,7 +4,7 @@ using YamlDotNet.Core;
 namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
 {
     [TestFixture]
-    public class InvalidYamlSemanticsTests
+    public class InvalidYamlStandardFormatTests
     {
         [Test]
         public void Read_GivenInputWithWrongYamlSyntax_ThrowsSourceReadExceptionWithInnerYamlSemanticErrorException()
@@ -19,7 +19,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         }
 
         [Test]
-        public void Read_GivenParameterNotUnderParametersSection_ThrowsSourceReadException()
+        public void Read_GivenParameterNotUnderParametersSection_Throws()
         {
             Assert.Throws<SourceReadException>(() => DriverWrapper.Read(@"
                 parameters:
