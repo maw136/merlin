@@ -69,47 +69,6 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         }
 
         [Test]
-        public void Read_GivenParameterValueDefinedForUnknownEnvironment_Throws()
-        {
-            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
-                environments:
-                    - local
-
-                parameters:
-                    - callTimeoutSeconds:
-                        value: 
-                            - test: 10"));
-
-            Assert.That(ex.Message, Is.EqualTo(
-                "Unknown environment `test` for which parameter `callTimeoutSeconds` is configured."));
-        }
-
-        [Test]
-        public void Read_GivenDoubledEnvironments_Throws()
-        {
-            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
-                environments:
-                    - local
-                    - local
-
-                parameters:
-                    - threadLimit: 20"));
-
-            Assert.That(ex.Message, Is.EqualTo("Environment `local` cannot occur multiple times."));
-        }
-
-        [Test]
-        public void Read_GivenDoubledParameters_Throws()
-        {
-            var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
-                parameters:
-                    - threadLimit: 20
-                    - threadLimit: 10"));
-
-            Assert.That(ex.Message, Is.EqualTo("Parameter `threadLimit` cannot occur multiple times."));
-        }
-
-        [Test]
         public void Read_GivenEnvironmentNamedDefault_Throws()
         {
             var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.Read(@"---
