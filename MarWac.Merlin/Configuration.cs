@@ -1,29 +1,40 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace MarWac.Merlin
 {
     /// <summary>
-    /// Represents configuration of some entity/system.
+    /// Represents configuration of some entity/system. Instances once constructed are immutable.
     /// </summary>
     public class Configuration
     {
         /// <summary>
-        /// Creates a configuration instance with empty parameter list.
+        /// Creates configuration defined with parameters.
         /// </summary>
-        public Configuration()
+        /// <param name="parameters">Parameters which constitute configuration</param>
+        /// <param name="environments">Optional environments in which parameters may have defined specific values</param>
+        public Configuration(IEnumerable<ConfigurationParameter> parameters,
+            IEnumerable<ConfigurableEnvironment> environments = null)
         {
-            Environments = new List<ConfigurableEnvironment>();
-            Parameters = new List<ConfigurationParameter>();    
+            if (parameters == null)
+            {
+                throw new ArgumentNullException(nameof(parameters));
+            }
+
+            Parameters = new List<ConfigurationParameter>(parameters);
+            Environments = environments != null
+                ? new List<ConfigurableEnvironment>(environments)
+                : new List<ConfigurableEnvironment>();
         }
 
         /// <summary>
         /// All enviornments defined in the configuration
         /// </summary>
-        public IList<ConfigurableEnvironment> Environments { get; }
+        public IReadOnlyCollection<ConfigurableEnvironment> Environments { get; }
 
         /// <summary>
         /// All parameters defined in the configuration
         /// </summary>
-        public IList<ConfigurationParameter> Parameters { get; }
+        public IReadOnlyCollection<ConfigurationParameter> Parameters { get; }
     }
 }

@@ -30,12 +30,14 @@ namespace MarWac.Merlin
         private class Reader
         {
             private readonly YamlMappingNode _root;
-            private readonly Configuration _configuration;
+            private readonly ISet<ConfigurableEnvironment> _environmentsSet;
+            private readonly IList<ConfigurationParameter> _parametersList;
 
             public Reader(Stream source)
             {
-                _configuration = new Configuration();
                 _root = ReadRoot(source);
+                _environmentsSet = new HashSet<ConfigurableEnvironment>();
+                _parametersList = new List<ConfigurationParameter>();
             }
 
             public Configuration Read()
@@ -44,7 +46,7 @@ namespace MarWac.Merlin
                 BuildUpParameters();
                 EnsureNoUnknownSectionProvided();
 
-                return _configuration;
+                return new Configuration(_parametersList, _environmentsSet);
             }
 
             private static YamlMappingNode ReadRoot(Stream source)
@@ -118,13 +120,13 @@ namespace MarWac.Merlin
                             $"`{ParameterDefaultValuePropertyName}` name is prohibited for environment name.");
                     }
 
-                    if (_configuration.Environments.Contains(configurableEnvironment))
+                    if (_environmentsSet.Contains(configurableEnvironment))
                     {
                         throw new InvalidYamlSourceFormatException(
                             $"Environment `{configurableEnvironment.Name}` cannot occur multiple times.");
                     }
 
-                    _configuration.Environments.Add(configurableEnvironment);
+                    _environmentsSet.Add(configurableEnvironment);
                 }
             }
 
@@ -134,13 +136,13 @@ namespace MarWac.Merlin
                 {
                     var configurationParameter = ReadConfigurationParameter(parameterNode);
 
-                    if (_configuration.Parameters.Any(p => p.Name == configurationParameter.Name))
+                    if (_parametersList.Any(p => p.Name == configurationParameter.Name))
                     {
                         throw new InvalidYamlSourceFormatException(
                             $"Parameter `{configurationParameter.Name}` cannot occur multiple times.");
                     }
 
-                    _configuration.Parameters.Add(configurationParameter);
+                    _parametersList.Add(configurationParameter);
                 }
             }
 
@@ -205,7 +207,7 @@ namespace MarWac.Merlin
                 foreach (var valueNode in valueNodes.OfType<YamlMappingNode>())
                 {
                     MapDefaultAndEnvironmentValues(parameterName, valueNode, valueMapping, out defaultValue,
-                        new HashSet<ConfigurableEnvironment>(_configuration.Environments));
+                        new HashSet<ConfigurableEnvironment>(_environmentsSet));
                 }
 
                 return new ConfigurationParameter(parameterName, defaultValue, valueMapping)

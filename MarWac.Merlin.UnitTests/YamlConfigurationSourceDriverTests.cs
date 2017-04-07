@@ -1,5 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using YamlDotNet.Core;
@@ -16,7 +16,7 @@ namespace MarWac.Merlin.UnitTests
                 parameters:
                     - callTimeoutSeconds: 15");
 
-            Assert.That(configuration.Parameters[0].Name, Is.EqualTo("callTimeoutSeconds"));
+            Assert.That(configuration.Parameters.ElementAt(0).Name, Is.EqualTo("callTimeoutSeconds"));
         }
 
         [Test]
@@ -26,7 +26,7 @@ namespace MarWac.Merlin.UnitTests
                 parameters:
                     - callTimeoutSeconds: 15");
 
-            Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("15"));
+            Assert.That(configuration.Parameters.ElementAt(0).DefaultValue, Is.EqualTo("15"));
         }
 
         [Test]
@@ -37,7 +37,7 @@ namespace MarWac.Merlin.UnitTests
                     - callTimeoutSeconds: 15
                     - importLocation: //share/imports/");
 
-            Assert.That(configuration.Parameters[0].Name, Is.EqualTo("callTimeoutSeconds"));
+            Assert.That(configuration.Parameters.ElementAt(0).Name, Is.EqualTo("callTimeoutSeconds"));
         }
 
         [Test]
@@ -48,7 +48,7 @@ namespace MarWac.Merlin.UnitTests
                     - callTimeoutSeconds: 15
                     - importLocation: //share/imports/");
 
-            Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("15"));
+            Assert.That(configuration.Parameters.ElementAt(0).DefaultValue, Is.EqualTo("15"));
         }
 
         [Test]
@@ -59,7 +59,7 @@ namespace MarWac.Merlin.UnitTests
                     - callTimeoutSeconds: 15
                     - importLocation: //share/imports/");
 
-            Assert.That(configuration.Parameters[1].Name, Is.EqualTo("importLocation"));
+            Assert.That(configuration.Parameters.ElementAt(1).Name, Is.EqualTo("importLocation"));
         }
 
         [Test]
@@ -70,7 +70,7 @@ namespace MarWac.Merlin.UnitTests
                     - callTimeoutSeconds: 15
                     - importLocation: //share/imports/");
 
-            Assert.That(configuration.Parameters[1].DefaultValue, Is.EqualTo("//share/imports/"));
+            Assert.That(configuration.Parameters.ElementAt(1).DefaultValue, Is.EqualTo("//share/imports/"));
         }
 
         [Test]
@@ -144,7 +144,7 @@ namespace MarWac.Merlin.UnitTests
                         description: How long the system waits for the response to come
                         value: 15");
 
-            Assert.That(configuration.Parameters[0].Name, Is.EqualTo("callTimeoutSeconds"));
+            Assert.That(configuration.Parameters.ElementAt(0).Name, Is.EqualTo("callTimeoutSeconds"));
         }
 
         [Test]
@@ -156,7 +156,7 @@ namespace MarWac.Merlin.UnitTests
                         description: How long the system waits for the response to come
                         value: 15");
 
-            Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("15"));
+            Assert.That(configuration.Parameters.ElementAt(0).DefaultValue, Is.EqualTo("15"));
         }
 
         [Test]
@@ -168,7 +168,7 @@ namespace MarWac.Merlin.UnitTests
                         description: How long the system waits for the response to come
                         value: 15");
 
-            Assert.That(configuration.Parameters[0].Description, Is.EqualTo("How long the system waits " +
+            Assert.That(configuration.Parameters.ElementAt(0).Description, Is.EqualTo("How long the system waits " +
                                                                             "for the response to come"));
         }
 
@@ -186,8 +186,8 @@ namespace MarWac.Merlin.UnitTests
                             - dev: 20
                             - test: 30");
 
-            Assert.That(configuration.Parameters[0].Values[new ConfigurableEnvironment("dev")], Is.EqualTo("20"));
-            Assert.That(configuration.Parameters[0].Values[new ConfigurableEnvironment("test")], Is.EqualTo("30"));
+            Assert.That(configuration.Parameters.ElementAt(0).Values[new ConfigurableEnvironment("dev")], Is.EqualTo("20"));
+            Assert.That(configuration.Parameters.ElementAt(0).Values[new ConfigurableEnvironment("test")], Is.EqualTo("30"));
         }
 
         [Test]
@@ -202,7 +202,7 @@ namespace MarWac.Merlin.UnitTests
                         value: 
                             - local: 15");
 
-            Assert.That(configuration.Parameters[0].DefaultValue, Is.Null);
+            Assert.That(configuration.Parameters.ElementAt(0).DefaultValue, Is.Null);
         }
 
         [Test]
@@ -216,9 +216,9 @@ namespace MarWac.Merlin.UnitTests
                 parameters:
                     - callTimeoutSeconds: 15");
 
-            Assert.That(configuration.Parameters[0].Values.ContainsKey(new ConfigurableEnvironment("dev")), Is.False);
-            Assert.That(configuration.Parameters[0].Values.ContainsKey(new ConfigurableEnvironment("test")), Is.False);
-            Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("15"));
+            Assert.That(configuration.Parameters.ElementAt(0).Values.ContainsKey(new ConfigurableEnvironment("dev")), Is.False);
+            Assert.That(configuration.Parameters.ElementAt(0).Values.ContainsKey(new ConfigurableEnvironment("test")), Is.False);
+            Assert.That(configuration.Parameters.ElementAt(0).DefaultValue, Is.EqualTo("15"));
         }
 
         [Test]
@@ -235,7 +235,7 @@ namespace MarWac.Merlin.UnitTests
                           - dev: 50
                           - default: 10");
 
-            Assert.That(configuration.Parameters[0].DefaultValue, Is.EqualTo("10"));
+            Assert.That(configuration.Parameters.ElementAt(0).DefaultValue, Is.EqualTo("10"));
         }
 
         [Test]
@@ -289,8 +289,8 @@ namespace MarWac.Merlin.UnitTests
                     - callTimeoutSeconds:
                         value: 10");
 
-            Assert.That(configuration.Environments[0].Name, Is.EqualTo("firstEnv"));
-            Assert.That(configuration.Environments[1].Name, Is.EqualTo("secondEnv"));
+            Assert.That(configuration.Environments.ElementAt(0).Name, Is.EqualTo("firstEnv"));
+            Assert.That(configuration.Environments.ElementAt(1).Name, Is.EqualTo("secondEnv"));
         }
 
         [Test]
