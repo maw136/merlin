@@ -45,7 +45,8 @@ namespace MarWac.Merlin
 
             if (string.IsNullOrEmpty(defaultValue) && !Values.Any())
             {
-                throw new ArgumentException("Either default value or value mapping per environment must be non empty.");
+                throw new ArgumentException(
+                    $"Either default value or value mapping per environment of parameter `{name}` must be non empty.");
             }
         }
     }
