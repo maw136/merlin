@@ -126,7 +126,15 @@ namespace MarWac.Merlin
             {
                 foreach (YamlMappingNode parameterNode in ReadParametersSequence())
                 {
-                    _configuration.Parameters.Add(ReadConfigurationParameter(parameterNode));
+                    var configurationParameter = ReadConfigurationParameter(parameterNode);
+
+                    if (_configuration.Parameters.Any(p => p.Name == configurationParameter.Name))
+                    {
+                        throw new InvalidYamlSourceFormatException($"Parameter `{configurationParameter.Name}` " +
+                                                                    "cannot occur multiple times.");
+                    }
+
+                    _configuration.Parameters.Add(configurationParameter);
                 }
             }
 
