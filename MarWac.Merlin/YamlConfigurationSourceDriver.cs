@@ -120,8 +120,8 @@ namespace MarWac.Merlin
 
                     if (_configuration.Environments.Contains(configurableEnvironment))
                     {
-                        throw new InvalidYamlSourceFormatException($"Environment `{configurableEnvironment.Name}` " +
-                                                                    "cannot occur multiple times.");
+                        throw new InvalidYamlSourceFormatException(
+                            $"Environment `{configurableEnvironment.Name}` cannot occur multiple times.");
                     }
 
                     _configuration.Environments.Add(configurableEnvironment);
@@ -136,8 +136,8 @@ namespace MarWac.Merlin
 
                     if (_configuration.Parameters.Any(p => p.Name == configurationParameter.Name))
                     {
-                        throw new InvalidYamlSourceFormatException($"Parameter `{configurationParameter.Name}` " +
-                                                                    "cannot occur multiple times.");
+                        throw new InvalidYamlSourceFormatException(
+                            $"Parameter `{configurationParameter.Name}` cannot occur multiple times.");
                     }
 
                     _configuration.Parameters.Add(configurationParameter);
@@ -169,7 +169,7 @@ namespace MarWac.Merlin
                 return new ConfigurationParameter(parameterName, parameterDefinition.ToString());
             }
 
-            private ConfigurationParameter ReadComplexConfigurationParameter(string parameterName, 
+            private ConfigurationParameter ReadComplexConfigurationParameter(string parameterName,
                 YamlMappingNode parameterDefinition)
             {
                 YamlNode descriptionNode;
@@ -188,13 +188,15 @@ namespace MarWac.Merlin
                 var sequenceOfValuesNode = values as YamlSequenceNode;
                 if (sequenceOfValuesNode != null)
                 {
-                    return ReadMultipleEnvironmentsConfiguredParameter(parameterName, sequenceOfValuesNode, descriptionNode);
+                    return ReadMultipleEnvironmentsConfiguredParameter(parameterName, sequenceOfValuesNode,
+                        descriptionNode);
                 }
 
-                throw new InvalidYamlSourceFormatException($"Invalid value definition for parameter `{parameterName}`.");
+                throw new InvalidYamlSourceFormatException(
+                    $"Invalid value definition for parameter `{parameterName}`.");
             }
 
-            private ConfigurationParameter ReadMultipleEnvironmentsConfiguredParameter(string parameterName, 
+            private ConfigurationParameter ReadMultipleEnvironmentsConfiguredParameter(string parameterName,
                 YamlSequenceNode valueNodes, YamlNode descriptionNode)
             {
                 string defaultValue = null;
@@ -202,7 +204,7 @@ namespace MarWac.Merlin
 
                 foreach (var valueNode in valueNodes.OfType<YamlMappingNode>())
                 {
-                    MapDefaultAndEnvironmentValues(parameterName, valueNode, valueMapping, out defaultValue, 
+                    MapDefaultAndEnvironmentValues(parameterName, valueNode, valueMapping, out defaultValue,
                         new HashSet<ConfigurableEnvironment>(_configuration.Environments));
                 }
 
@@ -212,8 +214,8 @@ namespace MarWac.Merlin
                 };
             }
 
-            private void MapDefaultAndEnvironmentValues(string parameterName, YamlMappingNode valueNode, 
-                IDictionary<ConfigurableEnvironment, string> valueMapping, out string defaultValue, 
+            private void MapDefaultAndEnvironmentValues(string parameterName, YamlMappingNode valueNode,
+                IDictionary<ConfigurableEnvironment, string> valueMapping, out string defaultValue,
                 ISet<ConfigurableEnvironment> definedEnvironments)
             {
                 defaultValue = null;
@@ -232,9 +234,9 @@ namespace MarWac.Merlin
                     {
                         throw new InvalidYamlSourceFormatException(
                             $"Unknown environment `{environmentName}` for which parameter `{parameterName}` is " +
-                             "configured.");
+                            "configured.");
                     }
-                
+
                     valueMapping[environment] = value;
                 }
             }
