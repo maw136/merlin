@@ -110,7 +110,15 @@ namespace MarWac.Merlin
             {
                 foreach (YamlScalarNode environmentNode in ReadEnvironmentsSequence())
                 {
-                    _configuration.Environments.Add(new ConfigurableEnvironment(environmentNode.Value));
+                    var configurableEnvironment = new ConfigurableEnvironment(environmentNode.Value);
+
+                    if (_configuration.Environments.Contains(configurableEnvironment))
+                    {
+                        throw new InvalidYamlSourceFormatException($"Environment `{configurableEnvironment.Name}` " +
+                                                                    "cannot occur multiple times.");
+                    }
+
+                    _configuration.Environments.Add(configurableEnvironment);
                 }
             }
 
