@@ -317,6 +317,19 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(ex.Message, Is.EqualTo("Parameter `threadLimit` cannot occur multiple times."));
         }
 
+        [Test]
+        public void Read_GivenEnvironmentNamedDefault_ThrowsInvalidYamlSourceFormatException()
+        {
+            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => Read(@"---
+                environments:
+                    - default
+                
+                parameters:
+                    - threadLimit: 10"));
+
+            Assert.That(ex.Message, Is.EqualTo("`default` name is prohibited for environment name."));
+        }
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
