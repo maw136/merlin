@@ -112,6 +112,12 @@ namespace MarWac.Merlin
                 {
                     var configurableEnvironment = new ConfigurableEnvironment(environmentNode.Value);
 
+                    if (configurableEnvironment.Name == ParameterDefaultValuePropertyName)
+                    {
+                        throw new InvalidYamlSourceFormatException(
+                            $"`{ParameterDefaultValuePropertyName}` name is prohibited for environment name.");
+                    }
+
                     if (_configuration.Environments.Contains(configurableEnvironment))
                     {
                         throw new InvalidYamlSourceFormatException($"Environment `{configurableEnvironment.Name}` " +
