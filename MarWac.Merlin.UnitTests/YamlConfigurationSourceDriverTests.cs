@@ -292,6 +292,20 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(configuration.Environments[1].Name, Is.EqualTo("secondEnv"));
         }
 
+        [Test]
+        public void Read_GivenDoubledEnvironments_ThrowsInvalidYamlSourceFormatException()
+        {
+            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => Read(@"---
+                environments:
+                    - local
+                    - local
+
+                parameters:
+                    - threadLimit: 20"));
+
+            Assert.That(ex.Message, Is.EqualTo("Environment `local` cannot occur multiple times."));
+        }
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
