@@ -306,6 +306,17 @@ namespace MarWac.Merlin.UnitTests
             Assert.That(ex.Message, Is.EqualTo("Environment `local` cannot occur multiple times."));
         }
 
+        [Test]
+        public void Read_GivenDoubledParameters_ThrowsInvalidYamlSourceFormatException()
+        {
+            var ex = Assert.Throws<InvalidYamlSourceFormatException>(() => Read(@"---
+                parameters:
+                    - threadLimit: 20
+                    - threadLimit: 10"));
+
+            Assert.That(ex.Message, Is.EqualTo("Parameter `threadLimit` cannot occur multiple times."));
+        }
+
         private static Configuration Read(string source)
         {
             var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
