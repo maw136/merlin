@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MarWac.Merlin
 {
@@ -25,6 +26,8 @@ namespace MarWac.Merlin
             Environments = environments != null
                 ? new List<ConfigurableEnvironment>(environments)
                 : new List<ConfigurableEnvironment>();
+
+            Validate();
         }
 
         /// <summary>
@@ -36,5 +39,44 @@ namespace MarWac.Merlin
         /// All parameters defined in the configuration
         /// </summary>
         public IReadOnlyCollection<ConfigurationParameter> Parameters { get; }
+
+        /// <summary>
+        /// Throws if there is any configuration issue. Ensures that the configuration instance built is valid.
+        /// </summary>
+        private void Validate()
+        {
+            var environmentsSoFar = new HashSet<ConfigurableEnvironment>();
+            var parameterNamesSoFar = new HashSet<string>();
+
+            foreach (var environment in Environments)
+            {
+                if (environmentsSoFar.Contains(environment))
+                {
+                    throw new InvalidConfigurationException(
+                        $"Environment `{environment.Name}` cannot occur multiple times.");
+                }
+                environmentsSoFar.Add(environment);
+            }
+
+            foreach (var parameter in Parameters)
+            {
+                if (parameterNamesSoFar.Contains(parameter.Name))
+                {
+                    throw new InvalidConfigurationException(
+                        $"Parameter `{parameter.Name}` cannot occur multiple times.");
+                }
+                parameterNamesSoFar.Add(parameter.Name);
+
+                foreach (var parameterEnvironment in parameter.Values.Keys)
+                {
+                    if (!environmentsSoFar.Contains(parameterEnvironment))
+                    {
+                        throw new InvalidConfigurationException(
+                            $"Unknown environment `{parameterEnvironment.Name}` for which parameter " +
+                            $"`{parameter.Name}` is configured.");
+                    }
+                }
+            }
+        }
     }
 }

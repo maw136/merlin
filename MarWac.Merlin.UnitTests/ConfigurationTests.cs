@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using NUnit.Framework;
 
@@ -41,6 +40,7 @@ namespace MarWac.Merlin.UnitTests
         }
 
         [Test]
+        [SuppressMessage("ReSharper", "ObjectCreationAsStatement")]
         public void Ctor_GivenParameterValueDefinedForUnknownEnvironment_Throws()
         {
             var ex = Assert.Throws<InvalidConfigurationException>(() => new Configuration(

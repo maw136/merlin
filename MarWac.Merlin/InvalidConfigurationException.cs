@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace MarWac.Merlin.UnitTests
+namespace MarWac.Merlin
 {
     /// <summary>
     /// Thrown when domain rules of configuration are infringed.
