@@ -27,7 +27,7 @@ namespace MarWac.Merlin
                 ? new List<ConfigurableEnvironment>(environments)
                 : new List<ConfigurableEnvironment>();
 
-            Validate();
+            new Validator(Environments, Parameters).Validate();
         }
 
         /// <summary>
@@ -43,38 +43,62 @@ namespace MarWac.Merlin
         /// <summary>
         /// Throws if there is any configuration issue. Ensures that the configuration instance built is valid.
         /// </summary>
-        private void Validate()
+        private class Validator
         {
-            var environmentsSoFar = new HashSet<ConfigurableEnvironment>();
-            var parameterNamesSoFar = new HashSet<string>();
+            private const string DuplicationErrorMessageFormat = "{0} `{1}` cannot occur multiple times.";
 
-            foreach (var environment in Environments)
+            private readonly IEnumerable<ConfigurableEnvironment> _environments;
+            private readonly IEnumerable<ConfigurationParameter> _parameters;
+            private readonly HashSet<string> _parameterNamesSoFar;
+            private readonly ISet<ConfigurableEnvironment> _environmentsSoFar;
+
+            public Validator(IEnumerable<ConfigurableEnvironment> environments,
+                IEnumerable<ConfigurationParameter> parameters)
             {
-                if (environmentsSoFar.Contains(environment))
-                {
-                    throw new InvalidConfigurationException(
-                        $"Environment `{environment.Name}` cannot occur multiple times.");
-                }
-                environmentsSoFar.Add(environment);
+                _environments = environments;
+                _parameters = parameters;
+                _environmentsSoFar = new HashSet<ConfigurableEnvironment>();
+                _parameterNamesSoFar = new HashSet<string>();
             }
 
-            foreach (var parameter in Parameters)
+            public void Validate()
             {
-                if (parameterNamesSoFar.Contains(parameter.Name))
-                {
-                    throw new InvalidConfigurationException(
-                        $"Parameter `{parameter.Name}` cannot occur multiple times.");
-                }
-                parameterNamesSoFar.Add(parameter.Name);
+                ValidateDuplicates(_environmentsSoFar, _environments,
+                     env => string.Format(DuplicationErrorMessageFormat, "Environment", env.Name));
 
-                foreach (var parameterEnvironment in parameter.Values.Keys)
+                ValidateDuplicates(_parameterNamesSoFar, _parameters.Select(p => p.Name),
+                     paramName => string.Format(DuplicationErrorMessageFormat, "Parameter", paramName));
+
+                ValidateIfParametersConfiguredForKnownEnvironments();
+            }
+
+            private void ValidateIfParametersConfiguredForKnownEnvironments()
+            {
+                foreach (var configurationParameter in _parameters)
                 {
-                    if (!environmentsSoFar.Contains(parameterEnvironment))
+                    foreach (var parameterEnvironment in configurationParameter.Values.Keys)
                     {
-                        throw new InvalidConfigurationException(
-                            $"Unknown environment `{parameterEnvironment.Name}` for which parameter " +
-                            $"`{parameter.Name}` is configured.");
+                        if (!_environmentsSoFar.Contains(parameterEnvironment))
+                        {
+                            throw new InvalidConfigurationException(
+                                $"Unknown environment `{parameterEnvironment.Name}` for which parameter " +
+                                $"`{configurationParameter.Name}` is configured.");
+                        }
                     }
+                }
+            }
+
+            private static void ValidateDuplicates<T>(
+                ISet<T> itemsSoFar, IEnumerable<T> items, Func<T, string> errorMessageGenerator) 
+                where T : IEquatable<T>
+            {
+                foreach (var item in items)
+                {
+                    if (itemsSoFar.Contains(item))
+                    {
+                        throw new InvalidConfigurationException(errorMessageGenerator(item));
+                    }
+                    itemsSoFar.Add(item);
                 }
             }
         }
