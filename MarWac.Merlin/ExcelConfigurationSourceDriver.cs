@@ -48,14 +48,14 @@ namespace MarWac.Merlin
         {
             foreach (var parameter in configuration.Parameters)
             {
-                var valuesInEnvironments = CalculateValuesPerAllEnvironments(environmentsArray, parameter);
+                var valuesInEnvironments = CalculateValuesPerAllEnvironments(parameter, environmentsArray);
 
                 WriteRow(writer, parameter.Name, parameter.Description, parameter.DefaultValue, valuesInEnvironments);
             }
         }
 
-        private static string[] CalculateValuesPerAllEnvironments(ConfigurableEnvironment[] environmentsArray,
-            ConfigurationParameter parameter)
+        private static string[] CalculateValuesPerAllEnvironments(ConfigurationParameter parameter, 
+            ConfigurableEnvironment[] environmentsArray)
         {
             var valuesInEnvironments = new string[environmentsArray.Length];
             for (var index = 0; index < environmentsArray.Length; index++)
