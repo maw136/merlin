@@ -49,6 +49,7 @@
     <Compile Include="ConfigurableEnvironment.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="ConfigurationParameter.cs" />
+    <Compile Include="ExcelConfigurationSourceDriver.cs" />
     <Compile Include="InvalidConfigurationException.cs" />
     <Compile Include="InvalidYamlConfigurationFormatException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
