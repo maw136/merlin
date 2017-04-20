@@ -21,6 +21,8 @@ namespace MarWac.Merlin
             "  </Worksheet>\r\n" +
             "</Workbook>";
 
+        private const string CellValueFormat = "        <Cell><Data ss:Type=\"String\">{0}</Data></Cell>";
+
         public void Write(Stream output, Configuration configuration)
         {
             using (var writer = new StreamWriter(output, Encoding.UTF8, bufferSize: 512, leaveOpen: true))
@@ -46,32 +48,39 @@ namespace MarWac.Merlin
         {
             foreach (var parameter in configuration.Parameters)
             {
-                var valuesInEnvironments = new string[environmentsArray.Length];
-                for (var index = 0; index < environmentsArray.Length; index++)
-                {
-                    var environment = environmentsArray[index];
-                    string parameterEnvironmentValue;
-                    if (parameter.Values.TryGetValue(environment, out parameterEnvironmentValue))
-                    {
-                        valuesInEnvironments[index] = parameterEnvironmentValue;
-                    }
-                }
+                var valuesInEnvironments = CalculateValuesPerAllEnvironments(environmentsArray, parameter);
 
                 WriteRow(writer, parameter.Name, parameter.Description, parameter.DefaultValue, valuesInEnvironments);
             }
+        }
+
+        private static string[] CalculateValuesPerAllEnvironments(ConfigurableEnvironment[] environmentsArray,
+            ConfigurationParameter parameter)
+        {
+            var valuesInEnvironments = new string[environmentsArray.Length];
+            for (var index = 0; index < environmentsArray.Length; index++)
+            {
+                var environment = environmentsArray[index];
+                string parameterEnvironmentValue;
+                if (parameter.Values.TryGetValue(environment, out parameterEnvironmentValue))
+                {
+                    valuesInEnvironments[index] = parameterEnvironmentValue;
+                }
+            }
+            return valuesInEnvironments;
         }
 
         private static void WriteRow(StreamWriter writer, string name, string description, string @default,
             IEnumerable<string> environmentValues)
         {
             writer.WriteLine("      <Row>");
-            writer.WriteLine("        <Cell><Data ss:Type=\"String\">" + name + "</Data></Cell>");
-            writer.WriteLine("        <Cell><Data ss:Type=\"String\">" + description + "</Data></Cell>");
-            writer.WriteLine("        <Cell><Data ss:Type=\"String\">" + @default + "</Data></Cell>");
+            writer.WriteLine(CellValueFormat, name);
+            writer.WriteLine(CellValueFormat, description);
+            writer.WriteLine(CellValueFormat, @default);
 
             foreach (var environmentValue in environmentValues)
             {
-                writer.WriteLine("        <Cell><Data ss:Type=\"String\">" + environmentValue + "</Data></Cell>");
+                writer.WriteLine(CellValueFormat, environmentValue);
             }
 
             writer.WriteLine("      </Row>");
