@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using System.IO;
+using System.Text;
+using NUnit.Framework;
 
 namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
 {
@@ -19,33 +21,42 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
 
             var actualOut = Write(configuration);
 
-            const string expected = @"
-                <?xml version=""1.0""?>
-                <?mso-application progid=""Excel.Sheet""?>
-                <Workbook xmlns=""urn:schemas-microsoft-com:office:spreadsheet""
-                 xmlns:ss=""urn:schemas-microsoft-com:office:spreadsheet"">
-                 <Worksheet ss:Name=""Sheet1"">
-                  <Table>
-                   <Row>
-                    <Cell><Data ss:Type=""String"">Name</Data></Cell>
-                    <Cell><Data ss:Type=""String"">Description</Data></Cell>
-                    <Cell><Data ss:Type=""String"">Default</Data></Cell>
-                   </Row>
-                   <Row>
-                    <Cell><Data ss:Type=""String"">maxThreads</Data></Cell>
-                    <Cell><Data ss:Type=""String"">Max number of threads</Data></Cell>
-                    <Cell><Data ss:Type=""String"">5</Data></Cell>
-                   </Row>
-                  </Table>
-                 </Worksheet>
-                </Workbook>";
+            string expected = 
+@"<?xml version=""1.0""?>
+<?mso-application progid=""Excel.Sheet""?>
+<Workbook xmlns=""urn:schemas-microsoft-com:office:spreadsheet""
+       xmlns:ss=""urn:schemas-microsoft-com:office:spreadsheet"">
+  <Worksheet ss:Name=""Sheet1"">
+    <Table>
+      <Row>
+        <Cell><Data ss:Type=""String"">Name</Data></Cell>
+        <Cell><Data ss:Type=""String"">Description</Data></Cell>
+        <Cell><Data ss:Type=""String"">Default</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type=""String"">maxThreads</Data></Cell>
+        <Cell><Data ss:Type=""String"">Max number of threads</Data></Cell>
+        <Cell><Data ss:Type=""String"">5</Data></Cell>
+      </Row>
+    </Table>
+  </Worksheet>
+</Workbook>";
 
             Assert.That(actualOut, Is.EqualTo(expected));
         }
 
         private string Write(Configuration configuration)
         {
-            return null;
+            using (var stream = new MemoryStream())
+            {
+                new Merlin.ExcelConfigurationSourceDriver().Write(stream, configuration);
+
+                stream.Position = 0L;
+
+                var streamReader = new StreamReader(stream, Encoding.UTF8);
+
+                return streamReader.ReadToEnd();
+            }
         }
     }
 }
