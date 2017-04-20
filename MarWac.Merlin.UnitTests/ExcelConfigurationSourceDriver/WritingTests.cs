@@ -21,7 +21,7 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
 
             var actualOut = Write(configuration);
 
-            string expected = 
+            const string expected = 
 @"<?xml version=""1.0""?>
 <?mso-application progid=""Excel.Sheet""?>
 <Workbook xmlns=""urn:schemas-microsoft-com:office:spreadsheet""
@@ -45,14 +45,12 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
             Assert.That(actualOut, Is.EqualTo(expected));
         }
 
-        private string Write(Configuration configuration)
+        private static string Write(Configuration configuration)
         {
             using (var stream = new MemoryStream())
             {
                 new Merlin.ExcelConfigurationSourceDriver().Write(stream, configuration);
-
                 stream.Position = 0L;
-
                 var streamReader = new StreamReader(stream, Encoding.UTF8);
 
                 return streamReader.ReadToEnd();

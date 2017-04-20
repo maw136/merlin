@@ -22,29 +22,38 @@ namespace MarWac.Merlin
 
         public void Write(Stream output, Configuration configuration)
         {
-            using (var writer = new StreamWriter(output, Encoding.UTF8, 512, true))
+            using (var writer = new StreamWriter(output, Encoding.UTF8, bufferSize: 512, leaveOpen: true))
             {
                 writer.Write(XmlHeader);
                 writer.Write(BeginningTableInWorksheetInWorkbookElements);
-
-                writer.WriteLine("      <Row>");
-                writer.WriteLine("        <Cell><Data ss:Type=\"String\">Name</Data></Cell>");
-                writer.WriteLine("        <Cell><Data ss:Type=\"String\">Description</Data></Cell>");
-                writer.WriteLine("        <Cell><Data ss:Type=\"String\">Default</Data></Cell>");
-                writer.WriteLine("      </Row>");
-
-                foreach (var parameter in configuration.Parameters)
-                {
-                    writer.WriteLine("      <Row>");
-                    writer.WriteLine($"        <Cell><Data ss:Type=\"String\">{parameter.Name}</Data></Cell>");
-                    writer.WriteLine($"        <Cell><Data ss:Type=\"String\">{parameter.Description}</Data></Cell>");
-                    writer.WriteLine($"        <Cell><Data ss:Type=\"String\">{parameter.DefaultValue}</Data></Cell>");
-                    writer.WriteLine("      </Row>");
-                }
-
+                WriteHeaderRow(writer);
+                WriteParameters(writer, configuration);
                 writer.Write(ClosingTableInWorksheetInWorkbookElements);
+
                 writer.Flush();
             }
+        }
+
+        private static void WriteHeaderRow(StreamWriter writer)
+        {
+            WriteRow(writer, "Name", "Description", "Default");
+        }
+
+        private static void WriteParameters(StreamWriter writer, Configuration configuration)
+        {
+            foreach (var parameter in configuration.Parameters)
+            {
+                WriteRow(writer, parameter.Name, parameter.Description, parameter.DefaultValue);
+            }
+        }
+
+        private static void WriteRow(StreamWriter writer, string name, string description, string @default)
+        {
+            writer.WriteLine("      <Row>");
+            writer.WriteLine("        <Cell><Data ss:Type=\"String\">" + name + "</Data></Cell>");
+            writer.WriteLine("        <Cell><Data ss:Type=\"String\">" + description + "</Data></Cell>");
+            writer.WriteLine("        <Cell><Data ss:Type=\"String\">" + @default + "</Data></Cell>");
+            writer.WriteLine("      </Row>");
         }
     }
 }
