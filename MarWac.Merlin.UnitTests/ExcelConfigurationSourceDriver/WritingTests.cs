@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using NUnit.Framework;
 
@@ -37,6 +38,57 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
         <Cell><Data ss:Type=""String"">maxThreads</Data></Cell>
         <Cell><Data ss:Type=""String"">Max number of threads</Data></Cell>
         <Cell><Data ss:Type=""String"">5</Data></Cell>
+      </Row>
+    </Table>
+  </Worksheet>
+</Workbook>";
+
+            Assert.That(actualOut, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Write_GivenOneParameterWithMultipleEnvironmentValues_WritesCorrectly()
+        {
+            var configuration = new Configuration(
+                new[]
+                {
+                    new ConfigurationParameter("maxThreads", "5", new Dictionary<ConfigurableEnvironment, string>
+                    {
+                        { new ConfigurableEnvironment("Local"), "15" }, 
+                        { new ConfigurableEnvironment("Test"), "25" } 
+                    })
+                    {
+                        Description = "Max number of threads"
+                    }
+                },
+                new []
+                {
+                    new ConfigurableEnvironment("Local"), 
+                    new ConfigurableEnvironment("Test") 
+                });
+
+            var actualOut = Write(configuration);
+
+            const string expected =
+@"<?xml version=""1.0""?>
+<?mso-application progid=""Excel.Sheet""?>
+<Workbook xmlns=""urn:schemas-microsoft-com:office:spreadsheet""
+       xmlns:ss=""urn:schemas-microsoft-com:office:spreadsheet"">
+  <Worksheet ss:Name=""Sheet1"">
+    <Table>
+      <Row>
+        <Cell><Data ss:Type=""String"">Name</Data></Cell>
+        <Cell><Data ss:Type=""String"">Description</Data></Cell>
+        <Cell><Data ss:Type=""String"">Default</Data></Cell>
+        <Cell><Data ss:Type=""String"">Local</Data></Cell>
+        <Cell><Data ss:Type=""String"">Test</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type=""String"">maxThreads</Data></Cell>
+        <Cell><Data ss:Type=""String"">Max number of threads</Data></Cell>
+        <Cell><Data ss:Type=""String"">5</Data></Cell>
+        <Cell><Data ss:Type=""String"">15</Data></Cell>
+        <Cell><Data ss:Type=""String"">25</Data></Cell>
       </Row>
     </Table>
   </Worksheet>
