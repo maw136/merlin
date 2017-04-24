@@ -66,6 +66,7 @@
     </Compile>
     <Compile Include="ConfigurationParameterTests.cs" />
     <Compile Include="ConfigurationTests.cs" />
+    <Compile Include="ExcelConfigurationSourceDriver\ReadingTests.cs" />
     <Compile Include="ExcelConfigurationSourceDriver\WritingTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="YamlConfigurationSourceDriver\DriverWrapper.cs" />
