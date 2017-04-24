@@ -1,10 +1,13 @@
-﻿using NUnit.Framework;
+﻿using System.IO;
+using System.Text;
+using NUnit.Framework;
 
 namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
 {
     [TestFixture]
     public class ReadingTests
     {
+        // TODO: merge with writingtests
         private const string XmlWrapUpFormat = @"<?xml version=""1.0""?>
 <?mso-application progid=""Excel.Sheet""?>
 <Workbook xmlns=""urn:schemas-microsoft-com:office:spreadsheet""
@@ -56,9 +59,12 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
             Assert.That(ex.Message, Is.EqualTo("C1 cell should be `Default`"));
         }
 
+        // TODO merge with driverwrapper
         private Configuration Read(string source)
         {
-            return new Configuration(new ConfigurationParameter[] {});
+            var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
+            var configuration = new Merlin.ExcelConfigurationSourceDriver().Read(sourceStream);
+            return configuration;
         }
 
         private static string ExcelDocWith(string excelData) => string.Format(XmlWrapUpFormat, excelData);

@@ -2,6 +2,8 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml.Linq;
+using System.Xml.XPath;
 
 namespace MarWac.Merlin
 {
@@ -22,6 +24,40 @@ namespace MarWac.Merlin
             "</Workbook>";
 
         private const string CellValueFormat = "        <Cell><Data ss:Type=\"String\">{0}</Data></Cell>";
+
+        // TODO: extract a dedicated class (as in Yaml source driver)
+        public Configuration Read(Stream source)
+        {
+            var xElement = XElement.Load(source);
+
+            XNamespace ns = "urn:schemas-microsoft-com:office:spreadsheet";
+            var rows = xElement.Descendants(ns + "Table").FirstOrDefault()?.Elements(ns + "Row");
+
+            var headerCells = rows?.ElementAt(0).Elements(ns + "Cell").ToArray() ?? new XElement[] {};
+
+            if (headerCells.Length == 0 || GetCellValue(headerCells[0]) != "Name")
+            {
+                throw new InvalidExcelConfigurationFormatException("A1 cell should be `Name`");
+            }
+
+            if (headerCells.Length == 1 || GetCellValue(headerCells[1]) != "Description")
+            {
+                throw new InvalidExcelConfigurationFormatException("B1 cell should be `Description`");
+            }
+
+            if (headerCells.Length == 2 || GetCellValue(headerCells[2]) != "Default")
+            {
+                throw new InvalidExcelConfigurationFormatException("C1 cell should be `Default`");
+            }
+
+            return new Configuration(new ConfigurationParameter[] {});
+        }
+
+        private string GetCellValue(XElement cellElement)
+        {
+            XNamespace ns = "urn:schemas-microsoft-com:office:spreadsheet";
+            return cellElement.Elements(ns + "Data").FirstOrDefault()?.Value;
+        }
 
         public void Write(Stream output, Configuration configuration)
         {
