@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Text;
+﻿using MarWac.Merlin.UnitTests.Utils;
 using NUnit.Framework;
 
 namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
@@ -7,26 +6,15 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
     [TestFixture]
     public class ReadingTests
     {
-        // TODO: merge with writingtests
-        private const string XmlWrapUpFormat = @"<?xml version=""1.0""?>
-<?mso-application progid=""Excel.Sheet""?>
-<Workbook xmlns=""urn:schemas-microsoft-com:office:spreadsheet""
-       xmlns:ss=""urn:schemas-microsoft-com:office:spreadsheet"">
-  <Worksheet ss:Name=""Sheet1"">
-    <Table>{0}
-    </Table>
-  </Worksheet>
-</Workbook>";
-
         [Test]
         public void Read_GivenA1IsNotTitledName_Throws()
         {
-            var source = ExcelDocWith(@"
+            var source = Merlin.ExcelConfigurationSourceDriver.CreateExcelXmlWithRows(@"
                 <Row>
                   <Cell><Data ss:Type=""String"">Not Name</Data></Cell>
                 </Row>");
 
-            var ex = Assert.Throws<InvalidExcelConfigurationFormatException>(() => Read(source));
+            var ex = Assert.Throws<InvalidExcelConfigurationFormatException>(() => DriverWrapper.ReadExcel(source));
 
             Assert.That(ex.Message, Is.EqualTo("A1 cell should be `Name`"));
         }
@@ -34,13 +22,13 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
         [Test]
         public void Read_GivenB1IsNotTitledDescription_Throws()
         {
-            var source = ExcelDocWith(@"
+            var source = Merlin.ExcelConfigurationSourceDriver.CreateExcelXmlWithRows(@"
                 <Row>
                   <Cell><Data ss:Type=""String"">Name</Data></Cell>
                   <Cell><Data ss:Type=""String""></Data></Cell>
                 </Row>");
 
-            var ex = Assert.Throws<InvalidExcelConfigurationFormatException>(() => Read(source));
+            var ex = Assert.Throws<InvalidExcelConfigurationFormatException>(() => DriverWrapper.ReadExcel(source));
 
             Assert.That(ex.Message, Is.EqualTo("B1 cell should be `Description`"));
         }
@@ -48,25 +36,15 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
         [Test]
         public void Read_GivenC1IsNotTitledDefault_Throws()
         {
-            var source = ExcelDocWith(@"
+            var source = Merlin.ExcelConfigurationSourceDriver.CreateExcelXmlWithRows(@"
                 <Row>
                   <Cell><Data ss:Type=""String"">Name</Data></Cell>
                   <Cell><Data ss:Type=""String"">Description</Data></Cell>
                 </Row>");
 
-            var ex = Assert.Throws<InvalidExcelConfigurationFormatException>(() => Read(source));
+            var ex = Assert.Throws<InvalidExcelConfigurationFormatException>(() => DriverWrapper.ReadExcel(source));
 
             Assert.That(ex.Message, Is.EqualTo("C1 cell should be `Default`"));
         }
-
-        // TODO merge with driverwrapper
-        private Configuration Read(string source)
-        {
-            var sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(source));
-            var configuration = new Merlin.ExcelConfigurationSourceDriver().Read(sourceStream);
-            return configuration;
-        }
-
-        private static string ExcelDocWith(string excelData) => string.Format(XmlWrapUpFormat, excelData);
     }
 }

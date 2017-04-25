@@ -9,7 +9,7 @@ namespace MarWac.Merlin
     /// <summary>
     /// Retrieves/stores configuration from/to YAML sources.
     /// </summary>
-    public class YamlConfigurationSourceDriver
+    public class YamlConfigurationSourceDriver : ConfigurationSourceDriver
     {
         private const string EnvironmentsSectionName = "environments";
         private const string ParametersSectionName = "parameters";
@@ -22,9 +22,22 @@ namespace MarWac.Merlin
         /// </summary>
         /// <param name="source">YAML source stream</param>
         /// <returns>Configuration instance filled with data from the YAML source</returns>
-        public Configuration Read(Stream source)
+        /// <exception cref="SourceReadException">Thrown if the source breaks YAML syntax.</exception>
+        /// <exception cref="InvalidYamlConfigurationFormatException">Thrown if YAML source does not contain expected
+        /// content format.</exception>
+        public override Configuration Read(Stream source)
         {
             return new Reader(source).Read();
+        }
+
+        /// <summary>
+        /// Stores the configuration to the YAML output stream.
+        /// </summary>
+        /// <param name="output">An output stream to store the configuration</param>
+        /// <param name="configuration">Configuration instance to be stored to the stream</param>
+        public override void Write(Stream output, Configuration configuration)
+        {
+            throw new System.NotImplementedException();
         }
 
         private class Reader
@@ -120,12 +133,6 @@ namespace MarWac.Merlin
                             $"`{ParameterDefaultValuePropertyName}` name is prohibited for environment name.");
                     }
 
-                    if (_environmentsSet.Contains(configurableEnvironment))
-                    {
-                        throw new InvalidYamlConfigurationFormatException(
-                            $"Environment `{configurableEnvironment.Name}` cannot occur multiple times.");
-                    }
-
                     _environmentsSet.Add(configurableEnvironment);
                 }
             }
@@ -134,15 +141,7 @@ namespace MarWac.Merlin
             {
                 foreach (YamlMappingNode parameterNode in ReadParametersSequence())
                 {
-                    var configurationParameter = ReadConfigurationParameter(parameterNode);
-
-                    if (_parametersList.Any(p => p.Name == configurationParameter.Name))
-                    {
-                        throw new InvalidYamlConfigurationFormatException(
-                            $"Parameter `{configurationParameter.Name}` cannot occur multiple times.");
-                    }
-
-                    _parametersList.Add(configurationParameter);
+                    _parametersList.Add(ReadConfigurationParameter(parameterNode));
                 }
             }
 
@@ -206,8 +205,7 @@ namespace MarWac.Merlin
 
                 foreach (var valueNode in valueNodes.OfType<YamlMappingNode>())
                 {
-                    MapDefaultAndEnvironmentValues(parameterName, valueNode, valueMapping, out defaultValue,
-                        new HashSet<ConfigurableEnvironment>(_environmentsSet));
+                    MapDefaultAndEnvironmentValues(valueNode, valueMapping, out defaultValue);
                 }
 
                 return new ConfigurationParameter(parameterName, defaultValue, valueMapping)
@@ -216,9 +214,8 @@ namespace MarWac.Merlin
                 };
             }
 
-            private void MapDefaultAndEnvironmentValues(string parameterName, YamlMappingNode valueNode,
-                IDictionary<ConfigurableEnvironment, string> valueMapping, out string defaultValue,
-                ISet<ConfigurableEnvironment> definedEnvironments)
+            private void MapDefaultAndEnvironmentValues(YamlMappingNode valueNode,
+                IDictionary<ConfigurableEnvironment, string> valueMapping, out string defaultValue)
             {
                 defaultValue = null;
                 KeyValuePair<YamlNode, YamlNode> valueAssignment = valueNode.Children.First();
@@ -232,13 +229,6 @@ namespace MarWac.Merlin
                 }
                 else
                 {
-                    if (!definedEnvironments.Contains(environment))
-                    {
-                        throw new InvalidYamlConfigurationFormatException(
-                            $"Unknown environment `{environmentName}` for which parameter `{parameterName}` is " +
-                            "configured.");
-                    }
-
                     valueMapping[environment] = value;
                 }
             }

@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using MarWac.Merlin.UnitTests.Utils;
 using NUnit.Framework;
 
 namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
@@ -9,7 +10,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenSingleParamUnderParametersNode_ReadsParameterNameCorrectly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 parameters:
                     - callTimeoutSeconds: 15");
 
@@ -19,7 +20,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenSingleParamUnderParametersNode_ReadsParameterValueCorrectly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 parameters:
                     - callTimeoutSeconds: 15");
 
@@ -29,7 +30,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenTwoParamsUnderParametersNode_ReadsFirstParamNameCorrectly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 parameters:
                     - callTimeoutSeconds: 15
                     - importLocation: //share/imports/");
@@ -40,7 +41,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenTwoParamsUnderParametersNode_ReadsFirstParamValueCorrectly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 parameters:
                     - callTimeoutSeconds: 15
                     - importLocation: //share/imports/");
@@ -51,7 +52,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenTwoParamsUnderParametersNode_ReadsSecondParamNameCorrectly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 parameters:
                     - callTimeoutSeconds: 15
                     - importLocation: //share/imports/");
@@ -62,7 +63,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenTwoParamsUnderParametersNode_ReadsSecondParamValueCorrectly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 parameters:
                     - callTimeoutSeconds: 15
                     - importLocation: //share/imports/");
@@ -73,7 +74,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenParameterWithDescription_ReadsParameterNameCorrectly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 parameters:
                     - callTimeoutSeconds:
                         description: How long the system waits for the response to come
@@ -85,7 +86,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenParameterWithDescription_ReadsParameterValueCorrectly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 parameters:
                     - callTimeoutSeconds:
                         description: How long the system waits for the response to come
@@ -97,7 +98,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenParameterWithDescription_ReadsParameterDescriptionCorrectly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 parameters:
                     - callTimeoutSeconds:
                         description: How long the system waits for the response to come
@@ -110,7 +111,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenParameterWithDistinctValuesPerEnvironments_ReadsParameterAssigningValuesPerEnvironments()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 environments:
                     - dev
                     - test
@@ -130,7 +131,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenParameterWithSpecificValuePerEnvironment_ReadsDefaultValueNull()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 environments:
                     - local
 
@@ -145,7 +146,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenParameterWithSameValuePerEnvironments_ReadsParameterDefaultValueOnly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 environments:
                     - dev
                     - test
@@ -163,7 +164,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenParameterWithDefaultValueAlongWithEnvironments_ReadsParameterDefaultValueAlso()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 environments:
                     - dev
                     - test

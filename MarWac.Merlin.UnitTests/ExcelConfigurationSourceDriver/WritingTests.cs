@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using System.Text;
+using MarWac.Merlin.UnitTests.Utils;
 using NUnit.Framework;
 
 namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
@@ -8,16 +7,6 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
     [TestFixture]
     public class WritingTests
     {
-        private const string ExpectedXmlWrapUpFormat = @"<?xml version=""1.0""?>
-<?mso-application progid=""Excel.Sheet""?>
-<Workbook xmlns=""urn:schemas-microsoft-com:office:spreadsheet""
-       xmlns:ss=""urn:schemas-microsoft-com:office:spreadsheet"">
-  <Worksheet ss:Name=""Sheet1"">
-    <Table>{0}
-    </Table>
-  </Worksheet>
-</Workbook>";
-
         [Test]
         public void Write_GivenOneParameterWithDefaultValueOnly_WritesCorrectly()
         {
@@ -30,9 +19,9 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
                     }
                 });
 
-            var actualOut = Write(configuration);
+            var actualOut = DriverWrapper.WriteExcel(configuration);
 
-            string expected = ExpectedWith(@"
+            string expected = Merlin.ExcelConfigurationSourceDriver.CreateExcelXmlWithRows(@"
       <Row>
         <Cell><Data ss:Type=""String"">Name</Data></Cell>
         <Cell><Data ss:Type=""String"">Description</Data></Cell>
@@ -68,9 +57,9 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
                     new ConfigurableEnvironment("Test") 
                 });
 
-            var actualOut = Write(configuration);
+            var actualOut = DriverWrapper.WriteExcel(configuration);
 
-            string expected = ExpectedWith(@"
+            string expected = Merlin.ExcelConfigurationSourceDriver.CreateExcelXmlWithRows(@"
       <Row>
         <Cell><Data ss:Type=""String"">Name</Data></Cell>
         <Cell><Data ss:Type=""String"">Description</Data></Cell>
@@ -114,9 +103,9 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
                     new ConfigurableEnvironment("Test")
                 });
 
-            var actualOut = Write(configuration);
+            var actualOut = DriverWrapper.WriteExcel(configuration);
 
-            string expected = ExpectedWith(@"
+            string expected = Merlin.ExcelConfigurationSourceDriver.CreateExcelXmlWithRows(@"
       <Row>
         <Cell><Data ss:Type=""String"">Name</Data></Cell>
         <Cell><Data ss:Type=""String"">Description</Data></Cell>
@@ -140,20 +129,6 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
       </Row>");
 
             Assert.That(actualOut, Is.EqualTo(expected));
-        }
-
-        private static string ExpectedWith(string innerPart) => string.Format(ExpectedXmlWrapUpFormat, innerPart);
-
-        private static string Write(Configuration configuration)
-        {
-            using (var stream = new MemoryStream())
-            {
-                new Merlin.ExcelConfigurationSourceDriver().Write(stream, configuration);
-                stream.Position = 0L;
-                var streamReader = new StreamReader(stream, Encoding.UTF8);
-
-                return streamReader.ReadToEnd();
-            }
         }
     }
 }

@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
-using System.Xml.XPath;
 
 namespace MarWac.Merlin
 {
-    public class ExcelConfigurationSourceDriver
+    /// <summary>
+    /// Retrieves/stores the configuration from/to Excel XML 2003 format stream.
+    /// </summary>
+    public class ExcelConfigurationSourceDriver : ConfigurationSourceDriver
     {
         private const string XmlHeader = "<?xml version=\"1.0\"?>\r\n" +
                                          "<?mso-application progid=\"Excel.Sheet\"?>\r\n";
@@ -25,101 +28,143 @@ namespace MarWac.Merlin
 
         private const string CellValueFormat = "        <Cell><Data ss:Type=\"String\">{0}</Data></Cell>";
 
-        // TODO: extract a dedicated class (as in Yaml source driver)
-        public Configuration Read(Stream source)
+        /// <summary>
+        /// Retrieves the configuration from Excel XML 2003 format stream.
+        /// </summary>
+        /// <param name="source">An Excel XML 2003 source stream</param>
+        /// <returns>Configuration instance filled with data from the the source</returns>
+        /// <exception cref="SourceReadException">Thrown if the Excel XML cannot be read as XML 
+        /// (XML-malformed).</exception>
+        /// <exception cref="InvalidExcelConfigurationFormatException">Thrown if content of the Excel source does not
+        /// align with the expected format.</exception>
+        public override Configuration Read(Stream source) => new Reader().Read(source);
+
+        /// <summary>
+        /// Stores the configuration to Excel XML 2003 format stream.
+        /// </summary>
+        /// <param name="output">An output stream to store the configuration</param>
+        /// <param name="configuration">Configuration instance to be stored to the stream</param>
+        public override void Write(Stream output, Configuration configuration) => 
+            new Writer(output, configuration).Write();
+
+        internal static string CreateExcelXmlWithRows(string rowsXml) 
+            => string.Format($"{XmlHeader}{BeginningTableInWorksheetInWorkbookElements}" +
+                             $"{{0}}\r\n{ClosingTableInWorksheetInWorkbookElements}", rowsXml.TrimStart('\r', '\n'));
+
+        private class Reader
         {
-            var xElement = XElement.Load(source);
-
-            XNamespace ns = "urn:schemas-microsoft-com:office:spreadsheet";
-            var rows = xElement.Descendants(ns + "Table").FirstOrDefault()?.Elements(ns + "Row");
-
-            var headerCells = rows?.ElementAt(0).Elements(ns + "Cell").ToArray() ?? new XElement[] {};
-
-            if (headerCells.Length == 0 || GetCellValue(headerCells[0]) != "Name")
+            public Configuration Read(Stream source)
             {
-                throw new InvalidExcelConfigurationFormatException("A1 cell should be `Name`");
-            }
+                var xElement = XElement.Load(source);
 
-            if (headerCells.Length == 1 || GetCellValue(headerCells[1]) != "Description")
-            {
-                throw new InvalidExcelConfigurationFormatException("B1 cell should be `Description`");
-            }
+                XNamespace ns = "urn:schemas-microsoft-com:office:spreadsheet";
+                var rows = xElement.Descendants(ns + "Table").FirstOrDefault()?.Elements(ns + "Row");
 
-            if (headerCells.Length == 2 || GetCellValue(headerCells[2]) != "Default")
-            {
-                throw new InvalidExcelConfigurationFormatException("C1 cell should be `Default`");
-            }
+                var headerCells = rows?.ElementAt(0).Elements(ns + "Cell").ToArray() ?? new XElement[] { };
 
-            return new Configuration(new ConfigurationParameter[] {});
-        }
-
-        private string GetCellValue(XElement cellElement)
-        {
-            XNamespace ns = "urn:schemas-microsoft-com:office:spreadsheet";
-            return cellElement.Elements(ns + "Data").FirstOrDefault()?.Value;
-        }
-
-        public void Write(Stream output, Configuration configuration)
-        {
-            using (var writer = new StreamWriter(output, Encoding.UTF8, bufferSize: 512, leaveOpen: true))
-            {
-                writer.Write(XmlHeader);
-                writer.Write(BeginningTableInWorksheetInWorkbookElements);
-                var environmentsArray = configuration.Environments.ToArray();
-                WriteHeaderRow(writer, environmentsArray);
-                WriteParameters(writer, configuration, environmentsArray);
-                writer.Write(ClosingTableInWorksheetInWorkbookElements);
-
-                writer.Flush();
-            }
-        }
-
-        private static void WriteHeaderRow(StreamWriter writer, ConfigurableEnvironment[] environmentsArray)
-        {
-            WriteRow(writer, "Name", "Description", "Default", environmentsArray.Select(env => env.Name));
-        }
-
-        private static void WriteParameters(StreamWriter writer, Configuration configuration,
-            ConfigurableEnvironment[] environmentsArray)
-        {
-            foreach (var parameter in configuration.Parameters)
-            {
-                var valuesInEnvironments = CalculateValuesPerAllEnvironments(parameter, environmentsArray);
-
-                WriteRow(writer, parameter.Name, parameter.Description, parameter.DefaultValue, valuesInEnvironments);
-            }
-        }
-
-        private static string[] CalculateValuesPerAllEnvironments(ConfigurationParameter parameter, 
-            ConfigurableEnvironment[] environmentsArray)
-        {
-            var valuesInEnvironments = new string[environmentsArray.Length];
-            for (var index = 0; index < environmentsArray.Length; index++)
-            {
-                var environment = environmentsArray[index];
-                string parameterEnvironmentValue;
-                if (parameter.Values.TryGetValue(environment, out parameterEnvironmentValue))
+                if (headerCells.Length == 0 || GetCellValue(headerCells[0]) != "Name")
                 {
-                    valuesInEnvironments[index] = parameterEnvironmentValue;
+                    throw new InvalidExcelConfigurationFormatException("A1 cell should be `Name`");
+                }
+
+                if (headerCells.Length == 1 || GetCellValue(headerCells[1]) != "Description")
+                {
+                    throw new InvalidExcelConfigurationFormatException("B1 cell should be `Description`");
+                }
+
+                if (headerCells.Length == 2 || GetCellValue(headerCells[2]) != "Default")
+                {
+                    throw new InvalidExcelConfigurationFormatException("C1 cell should be `Default`");
+                }
+
+                return new Configuration(new ConfigurationParameter[] { });
+            }
+
+            private string GetCellValue(XElement cellElement)
+            {
+                XNamespace ns = "urn:schemas-microsoft-com:office:spreadsheet";
+                return cellElement.Elements(ns + "Data").FirstOrDefault()?.Value;
+            }
+        }
+
+        private class Writer : IDisposable
+        {
+            private readonly Stream _output;
+            private readonly Configuration _configuration;
+            private readonly ConfigurableEnvironment[] _environments;
+            private StreamWriter _streamWriter;
+
+            public Writer(Stream output, Configuration configuration)
+            {
+                _output = output;
+                _configuration = configuration;
+                _environments = _configuration.Environments.ToArray();
+            }
+
+            public void Write()
+            {
+                using (_streamWriter = new StreamWriter(_output, Encoding.UTF8, bufferSize: 512, leaveOpen: true))
+                {
+                    _streamWriter.Write(XmlHeader);
+                    _streamWriter.Write(BeginningTableInWorksheetInWorkbookElements);
+                    WriteHeaderRow();
+                    WriteParameters();
+                    _streamWriter.Write(ClosingTableInWorksheetInWorkbookElements);
+
+                    _streamWriter.Flush();
                 }
             }
-            return valuesInEnvironments;
-        }
 
-        private static void WriteRow(StreamWriter writer, string name, string description, string @default,
-            IEnumerable<string> environmentValues)
-        {
-            writer.WriteLine("      <Row>");
-            writer.WriteLine(CellValueFormat, name);
-            writer.WriteLine(CellValueFormat, description);
-            writer.WriteLine(CellValueFormat, @default);
-
-            foreach (var environmentValue in environmentValues)
+            private void WriteHeaderRow()
             {
-                writer.WriteLine(CellValueFormat, environmentValue);
+                WriteRow("Name", "Description", "Default", _environments.Select(env => env.Name));
             }
 
-            writer.WriteLine("      </Row>");
+            private void WriteParameters()
+            {
+                foreach (var parameter in _configuration.Parameters)
+                {
+                    var valuesInEnvironments = CalculateValuesPerAllEnvironments(parameter);
+
+                    WriteRow(parameter.Name, parameter.Description, parameter.DefaultValue, valuesInEnvironments);
+                }
+            }
+
+            private string[] CalculateValuesPerAllEnvironments(ConfigurationParameter parameter)
+            {
+                var valuesInEnvironments = new string[_environments.Length];
+                for (var index = 0; index < _environments.Length; index++)
+                {
+                    var environment = _environments[index];
+                    string parameterEnvironmentValue;
+                    if (parameter.Values.TryGetValue(environment, out parameterEnvironmentValue))
+                    {
+                        valuesInEnvironments[index] = parameterEnvironmentValue;
+                    }
+                }
+                return valuesInEnvironments;
+            }
+
+            private void WriteRow(string name, string description, string @default, 
+                IEnumerable<string> environmentValues)
+            {
+                _streamWriter.WriteLine("      <Row>");
+                _streamWriter.WriteLine(CellValueFormat, name);
+                _streamWriter.WriteLine(CellValueFormat, description);
+                _streamWriter.WriteLine(CellValueFormat, @default);
+
+                foreach (var environmentValue in environmentValues)
+                {
+                    _streamWriter.WriteLine(CellValueFormat, environmentValue);
+                }
+
+                _streamWriter.WriteLine("      </Row>");
+            }
+
+            public void Dispose()
+            {
+                _streamWriter.Dispose();
+            }
         }
     }
 }

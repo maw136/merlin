@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using MarWac.Merlin.UnitTests.Utils;
+using NUnit.Framework;
 using YamlDotNet.Core;
 
 namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
@@ -9,7 +10,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenInputWithWrongYamlSyntax_ThrowsSourceReadExceptionWithInnerYamlSemanticErrorException()
         {
-            var ex = Assert.Throws<SourceReadException>(() => DriverWrapper.Read(@"---
+            var ex = Assert.Throws<SourceReadException>(() => DriverWrapper.ReadYaml(@"---
                 parameters:
                   - key
                  - error"));
@@ -21,7 +22,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenParameterNotUnderParametersSection_Throws()
         {
-            Assert.Throws<SourceReadException>(() => DriverWrapper.Read(@"
+            Assert.Throws<SourceReadException>(() => DriverWrapper.ReadYaml(@"
                 parameters:
                   - firstParam: 20
                   

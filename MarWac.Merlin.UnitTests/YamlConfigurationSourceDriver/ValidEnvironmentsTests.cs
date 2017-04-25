@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using MarWac.Merlin.UnitTests.Utils;
 using NUnit.Framework;
 
 namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
@@ -9,7 +10,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Read_GivenTwoEnvironments_ReadsEnvironmentsCorrectly()
         {
-            var configuration = DriverWrapper.Read(@"---
+            var configuration = DriverWrapper.ReadYaml(@"---
                 environments:
                     - firstEnv
                     - secondEnv
