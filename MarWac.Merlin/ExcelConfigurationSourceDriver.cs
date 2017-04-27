@@ -77,7 +77,24 @@ namespace MarWac.Merlin
                     throw new InvalidExcelConfigurationFormatException("C1 cell should be `Default`");
                 }
 
-                return new Configuration(new ConfigurationParameter[] { });
+                var paramRowsTillFirstBlank = rows.Skip(1)
+                                                  .TakeWhile(row => row.Attributes()
+                                                                       .All(attr => attr.Name != ns + "Index"));
+                IEnumerable<ConfigurationParameter> parameters = ReadParamsRowByRow(paramRowsTillFirstBlank);
+
+                return new Configuration(parameters);
+            }
+
+            private IEnumerable<ConfigurationParameter> ReadParamsRowByRow(IEnumerable<XElement> paramRows)
+            {
+                XNamespace ns = "urn:schemas-microsoft-com:office:spreadsheet";
+
+                return from row in paramRows
+                       let cells = row.Elements(ns + "Cell").ToArray()
+                       select new ConfigurationParameter(GetCellValue(cells[0]), GetCellValue(cells[2]))
+                       {
+                           Description = GetCellValue(cells[1])
+                       };
             }
 
             private string GetCellValue(XElement cellElement)
