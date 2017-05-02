@@ -3,6 +3,9 @@ using System.Text;
 
 namespace MarWac.Merlin.UnitTests.Utils
 {
+    /// <summary>
+    /// A facade over various drivers employed in unit tests as subjects under test.
+    /// </summary>
     internal static class DriverWrapper
     {
         public static Configuration ReadYaml(string source) => Read(source, new Merlin.YamlConfigurationSourceDriver());

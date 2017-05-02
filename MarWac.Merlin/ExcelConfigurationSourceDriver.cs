@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Xml.Linq;
 
 namespace MarWac.Merlin
@@ -12,21 +10,7 @@ namespace MarWac.Merlin
     /// </summary>
     public class ExcelConfigurationSourceDriver : ConfigurationSourceDriver
     {
-        private const string XmlHeader = "<?xml version=\"1.0\"?>\r\n" +
-                                         "<?mso-application progid=\"Excel.Sheet\"?>\r\n";
-
-        private const string BeginningTableInWorksheetInWorkbookElements =
-            "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\r\n" +
-            "       xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\">\r\n" +
-            "  <Worksheet ss:Name=\"Sheet1\">\r\n" +
-            "    <Table>\r\n";
-
-        private const string ClosingTableInWorksheetInWorkbookElements =
-            "    </Table>\r\n" +
-            "  </Worksheet>\r\n" +
-            "</Workbook>";
-
-        private const string CellValueFormat = "        <Cell><Data ss:Type=\"String\">{0}</Data></Cell>";
+        internal static readonly XNamespace Ns = "urn:schemas-microsoft-com:office:spreadsheet";
 
         /// <summary>
         /// Retrieves the configuration from Excel XML 2003 format stream.
@@ -44,23 +28,38 @@ namespace MarWac.Merlin
         /// </summary>
         /// <param name="output">An output stream to store the configuration</param>
         /// <param name="configuration">Configuration instance to be stored to the stream</param>
-        public override void Write(Stream output, Configuration configuration) => 
-            new Writer(output, configuration).Write();
-
-        internal static string CreateExcelXmlWithRows(string rowsXml) 
-            => string.Format($"{XmlHeader}{BeginningTableInWorksheetInWorkbookElements}" +
-                             $"{{0}}\r\n{ClosingTableInWorksheetInWorkbookElements}", rowsXml.TrimStart('\r', '\n'));
+        public override void Write(Stream output, Configuration configuration) =>
+            new Writer(configuration).Write(output);
 
         private class Reader
         {
             public Configuration Read(Stream source)
             {
-                var xElement = XElement.Load(source);
+                var allRows = GetAllTableRows(XElement.Load(source));
 
-                XNamespace ns = "urn:schemas-microsoft-com:office:spreadsheet";
-                var rows = xElement.Descendants(ns + "Table").FirstOrDefault()?.Elements(ns + "Row");
+                if (!allRows.Any())
+                {
+                    return new Configuration(Enumerable.Empty<ConfigurationParameter>());
+                }
+                
+                ParseHeader(allRows);
 
-                var headerCells = rows?.ElementAt(0).Elements(ns + "Cell").ToArray() ?? new XElement[] { };
+                IEnumerable<ConfigurationParameter> parameters = ParseParameters(allRows);
+
+                return new Configuration(parameters);
+            }
+
+            private static XElement[] GetAllTableRows(XElement root)
+            {
+                return root.Descendants(Ns + "Table")
+                           .FirstOrDefault()?
+                           .Elements(Ns + "Row")
+                           .ToArray() ?? new XElement[] {};
+            }
+
+            private static void ParseHeader(IReadOnlyList<XElement> allRows)
+            {
+                var headerCells = allRows[0].Elements(Ns + "Cell").ToArray();
 
                 if (headerCells.Length == 0 || GetCellValue(headerCells[0]) != "Name")
                 {
@@ -76,75 +75,73 @@ namespace MarWac.Merlin
                 {
                     throw new InvalidExcelConfigurationFormatException("C1 cell should be `Default`");
                 }
-
-                var paramRowsTillFirstBlank = rows.Skip(1)
-                                                  .TakeWhile(row => row.Attributes()
-                                                                       .All(attr => attr.Name != ns + "Index"));
-                IEnumerable<ConfigurationParameter> parameters = ReadParamsRowByRow(paramRowsTillFirstBlank);
-
-                return new Configuration(parameters);
             }
 
-            private IEnumerable<ConfigurationParameter> ReadParamsRowByRow(IEnumerable<XElement> paramRows)
+            private static IEnumerable<ConfigurationParameter> ParseParameters(IEnumerable<XElement> allRows)
             {
-                XNamespace ns = "urn:schemas-microsoft-com:office:spreadsheet";
+                var paramRowsTillFirstBlank = allRows
+                    .Skip(1)
+                    .TakeWhile(row => row.Attributes()
+                        .All(attr => attr.Name != Ns + "Index"));
 
-                return from row in paramRows
-                       let cells = row.Elements(ns + "Cell").ToArray()
-                       select new ConfigurationParameter(GetCellValue(cells[0]), GetCellValue(cells[2]))
-                       {
-                           Description = GetCellValue(cells[1])
-                       };
+                return ReadParamsRowByRow(paramRowsTillFirstBlank);
             }
 
-            private string GetCellValue(XElement cellElement)
+            private static IEnumerable<ConfigurationParameter> ReadParamsRowByRow(IEnumerable<XElement> paramRows)
             {
-                XNamespace ns = "urn:schemas-microsoft-com:office:spreadsheet";
-                return cellElement.Elements(ns + "Data").FirstOrDefault()?.Value;
+                // TODO: handling blank cells
+                return 
+                    from row in paramRows
+                    let cells = row.Elements(Ns + "Cell").ToArray()
+                    let name = GetCellValue(cells[0])
+                    let defaultValue = GetCellValue(cells[2])
+                    let description = GetCellValue(cells[1])
+                    select new ConfigurationParameter(name, defaultValue)
+                    {
+                        Description = description
+                    };
+            }
+
+            private static string GetCellValue(XElement cellElement)
+            {
+                return cellElement.Elements(Ns + "Data").FirstOrDefault()?.Value;
             }
         }
 
-        private class Writer : IDisposable
+        private class Writer
         {
-            private readonly Stream _output;
             private readonly Configuration _configuration;
             private readonly ConfigurableEnvironment[] _environments;
-            private StreamWriter _streamWriter;
+            private static readonly string[] HeaderColumnNames = {"Name", "Description", "Default"};
 
-            public Writer(Stream output, Configuration configuration)
+            public Writer(Configuration configuration)
             {
-                _output = output;
                 _configuration = configuration;
                 _environments = _configuration.Environments.ToArray();
             }
 
-            public void Write()
+            public void Write(Stream output)
             {
-                using (_streamWriter = new StreamWriter(_output, Encoding.UTF8, bufferSize: 512, leaveOpen: true))
-                {
-                    _streamWriter.Write(XmlHeader);
-                    _streamWriter.Write(BeginningTableInWorksheetInWorkbookElements);
-                    WriteHeaderRow();
-                    WriteParameters();
-                    _streamWriter.Write(ClosingTableInWorksheetInWorkbookElements);
+                var content = new XStreamingElement(Ns + "Workbook",
+                    new XAttribute(XNamespace.Xmlns + "ss", Ns),
+                    new XStreamingElement(Ns + "Worksheet", new XAttribute(Ns + "Name", "Sheet1"),
+                        new XStreamingElement(Ns + "Table",
+                            CreateHeaderRow(),
+                            CreateParameterRows())));
 
-                    _streamWriter.Flush();
-                }
+                content.Save(output);
             }
 
-            private void WriteHeaderRow()
-            {
-                WriteRow("Name", "Description", "Default", _environments.Select(env => env.Name));
-            }
+            private XElement CreateHeaderRow() => CreateRow(HeaderColumnNames
+                .Concat(_environments.Select(env => env.Name)));
 
-            private void WriteParameters()
+            private IEnumerable<XElement> CreateParameterRows()
             {
-                foreach (var parameter in _configuration.Parameters)
-                {
-                    var valuesInEnvironments = CalculateValuesPerAllEnvironments(parameter);
-
-                    WriteRow(parameter.Name, parameter.Description, parameter.DefaultValue, valuesInEnvironments);
-                }
+                return 
+                    from parameter in _configuration.Parameters
+                    let nonEnvironmentValues = new[] {parameter.Name, parameter.Description, parameter.DefaultValue}
+                    let valuesInEnvironments = CalculateValuesPerAllEnvironments(parameter)
+                    select CreateRow(nonEnvironmentValues.Concat(valuesInEnvironments));
             }
 
             private string[] CalculateValuesPerAllEnvironments(ConfigurationParameter parameter)
@@ -162,25 +159,10 @@ namespace MarWac.Merlin
                 return valuesInEnvironments;
             }
 
-            private void WriteRow(string name, string description, string @default, 
-                IEnumerable<string> environmentValues)
+            private XElement CreateRow(IEnumerable<string> values)
             {
-                _streamWriter.WriteLine("      <Row>");
-                _streamWriter.WriteLine(CellValueFormat, name);
-                _streamWriter.WriteLine(CellValueFormat, description);
-                _streamWriter.WriteLine(CellValueFormat, @default);
-
-                foreach (var environmentValue in environmentValues)
-                {
-                    _streamWriter.WriteLine(CellValueFormat, environmentValue);
-                }
-
-                _streamWriter.WriteLine("      </Row>");
-            }
-
-            public void Dispose()
-            {
-                _streamWriter.Dispose();
+                return new XElement(Ns + "Row", values.Select(v => new XElement(Ns + "Cell",
+                    new XElement(Ns + "Data", new XAttribute(Ns + "Type", "String"), v))));
             }
         }
     }
