@@ -123,5 +123,46 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
             Assert.That(param2.Description, Is.EqualTo("Base URI for server REST API"));
             Assert.That(param2.DefaultValue, Is.EqualTo("http://server.com/api"));
         }
+
+        [Test]
+        public void Read_GivenSingleParamWithMultipleEnvironments_ReadsEnvironmentConfigurationCorrectly()
+        {
+            var source =
+                $@"<?xml version=""1.0""?>
+                <?mso-application progid=""Excel.Sheet""?>
+                <Workbook xmlns=""urn:schemas-microsoft-com:office:spreadsheet""
+                       xmlns:ss=""urn:schemas-microsoft-com:office:spreadsheet"">  
+                  <Worksheet ss:Name=""Sheet1"">
+                    <Table>
+                      <Row>
+                        <Cell><Data ss:Type=""String"">Name</Data></Cell>
+                        <Cell><Data ss:Type=""String"">Description</Data></Cell>
+                        <Cell><Data ss:Type=""String"">Default</Data></Cell>
+                        <Cell><Data ss:Type=""String"">Localhost</Data></Cell>
+                        <Cell><Data ss:Type=""String"">Test</Data></Cell>
+                        <Cell ss:Index=""7""><Data ss:Type=""String"">Disregarded since after blank</Data></Cell>
+                      </Row>
+                      <Row>
+                        <Cell><Data ss:Type=""String"">maxThreads</Data></Cell>
+                        <Cell ss:Index=""3""><Data ss:Type=""String"">10</Data></Cell>
+                        <Cell><Data ss:Type=""String"">20</Data></Cell>
+                        <Cell><Data ss:Type=""String"">30</Data></Cell>
+                      </Row>
+                    </Table>
+                  </Worksheet>
+                </Workbook>";
+
+            var config = ReadExcel(source);
+
+            Assert.That(config.Environments.Count, Is.EqualTo(2));
+
+            var param = config.Parameters.First();
+            Assert.That(param.Name, Is.EqualTo("maxThreads"));
+            Assert.That(param.Description, Is.Null);
+            Assert.That(param.DefaultValue, Is.EqualTo("10"));
+            Assert.That(param.Values.Keys.Count(), Is.EqualTo(2));
+            Assert.That(param.Values[new ConfigurableEnvironment("Localhost")], Is.EqualTo("20"));
+            Assert.That(param.Values[new ConfigurableEnvironment("Test")], Is.EqualTo("30"));
+        }
     }
 }
