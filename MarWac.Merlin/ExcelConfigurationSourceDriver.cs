@@ -46,7 +46,6 @@ namespace MarWac.Merlin
                 }
 
                 ConfigurableEnvironment[] environments = ParseHeader(allRows);
-
                 IEnumerable<ConfigurationParameter> parameters = ParseParameters(allRows, environments);
 
                 return new Configuration(parameters, environments);
@@ -81,7 +80,7 @@ namespace MarWac.Merlin
 
                 var environments = headerCells
                     .Skip(3)
-                    .TakeWhile(cell => !cell.Attributes(Ns + "Index").Any()) // till blank cell
+                    .TakeWhile(IsNotBlank)
                     .Select(cell => new ConfigurableEnvironment(GetCellValue(cell)))
                     .ToArray();
 
@@ -93,7 +92,7 @@ namespace MarWac.Merlin
             {
                 return allRows
                     .Skip(1) // the header row
-                    .TakeWhile(row => !row.Attributes(Ns + "Index").Any()) // till blank row // TODO dry
+                    .TakeWhile(IsNotBlank)
                     .Select(row => CreateParameter(row.Elements(Ns + "Cell"), environments));
             }
 
@@ -101,49 +100,22 @@ namespace MarWac.Merlin
                 ConfigurableEnvironment[] environments)
             {
                 var environmentValuesMapping = new Dictionary<ConfigurableEnvironment, string>();
-
                 var currentColumnIndex = 1;
                 var lastEnvironmentColumnIndex = environments.Length + EnvironmentColumnsShift;
-
                 string paramName = null;
                 string paramDescription = null;
                 string paramDefaultValue = null;
 
                 foreach (var cell in rowCells)
                 {
-                    var cellIndexAttribute = cell.Attributes(Ns + "Index").FirstOrDefault();
-                    if (cellIndexAttribute != null)
+                    currentColumnIndex = GetAdjustedColumnIndex(cell) ?? currentColumnIndex;
+                    if (currentColumnIndex > lastEnvironmentColumnIndex)
                     {
-                        currentColumnIndex = int.Parse(cellIndexAttribute.Value);
-                        if (currentColumnIndex > lastEnvironmentColumnIndex)
-                        {
-                            break;
-                        }
+                        break;
                     }
 
-                    string cellValue = GetCellValue(cell);
-
-                    if (currentColumnIndex <= EnvironmentColumnsShift)
-                    {
-                        switch (currentColumnIndex)
-                        {
-                            case 1:
-                                paramName = cellValue;
-                                break;
-                            case 2:
-                                paramDescription = cellValue;
-                                break;
-                            case 3:
-                                paramDefaultValue = cellValue;
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        var environment = environments[currentColumnIndex - EnvironmentColumnsShift - 1];
-                        
-                        environmentValuesMapping.Add(environment, cellValue);
-                    }
+                    BuildParamPart(environments, cell, currentColumnIndex, 
+                        ref paramName, ref paramDescription, ref paramDefaultValue, environmentValuesMapping);
 
                     currentColumnIndex++;
                     if (currentColumnIndex > lastEnvironmentColumnIndex)
@@ -157,6 +129,46 @@ namespace MarWac.Merlin
                     Description = paramDescription
                 };
             }
+
+            private static void BuildParamPart(ConfigurableEnvironment[] environments, 
+                XElement cell, int currentColumnIndex,
+                ref string paramName, ref string paramDescription, ref string paramDefaultValue, 
+                Dictionary<ConfigurableEnvironment, string> environmentValuesMapping)
+            {
+                string cellValue = GetCellValue(cell);
+
+                if (currentColumnIndex <= EnvironmentColumnsShift)
+                {
+                    switch (currentColumnIndex)
+                    {
+                        case 1:
+                            paramName = cellValue;
+                            break;
+                        case 2:
+                            paramDescription = cellValue;
+                            break;
+                        case 3:
+                            paramDefaultValue = cellValue;
+                            break;
+                    }
+                }
+                else
+                {
+                    var environment = environments[currentColumnIndex - EnvironmentColumnsShift - 1];
+
+                    environmentValuesMapping.Add(environment, cellValue);
+                }
+            }
+
+            private static int? GetAdjustedColumnIndex(XElement cell)
+            {
+                return cell
+                    .Attributes(Ns + "Index")
+                    .Select(a => (int?) int.Parse(a.Value))
+                    .FirstOrDefault();
+            }
+
+            private static bool IsNotBlank(XElement element) => !element.Attributes(Ns + "Index").Any();
 
             private static string GetCellValue(XElement cellElement)
             {
