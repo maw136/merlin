@@ -33,6 +33,9 @@ namespace MarWac.Merlin
 
         private class Reader
         {
+            private const int ColumnIndexOfFirstEnvironment = 4; // first column has index = 1
+            private const int EnvironmentColumnsShift = ColumnIndexOfFirstEnvironment - 1;
+
             public Configuration Read(Stream source)
             {
                 var allRows = GetAllTableRows(XElement.Load(source));
@@ -41,12 +44,12 @@ namespace MarWac.Merlin
                 {
                     return new Configuration(Enumerable.Empty<ConfigurationParameter>());
                 }
-                
-                ParseHeader(allRows);
 
-                IEnumerable<ConfigurationParameter> parameters = ParseParameters(allRows);
+                ConfigurableEnvironment[] environments = ParseHeader(allRows);
 
-                return new Configuration(parameters);
+                IEnumerable<ConfigurationParameter> parameters = ParseParameters(allRows, environments);
+
+                return new Configuration(parameters, environments);
             }
 
             private static XElement[] GetAllTableRows(XElement root)
@@ -57,7 +60,7 @@ namespace MarWac.Merlin
                            .ToArray() ?? new XElement[] {};
             }
 
-            private static void ParseHeader(IReadOnlyList<XElement> allRows)
+            private static ConfigurableEnvironment[] ParseHeader(IReadOnlyList<XElement> allRows)
             {
                 var headerCells = allRows[0].Elements(Ns + "Cell").ToArray();
 
@@ -75,31 +78,84 @@ namespace MarWac.Merlin
                 {
                     throw new InvalidExcelConfigurationFormatException("C1 cell should be `Default`");
                 }
+
+                var environments = headerCells
+                    .Skip(3)
+                    .TakeWhile(cell => !cell.Attributes(Ns + "Index").Any()) // till blank cell
+                    .Select(cell => new ConfigurableEnvironment(GetCellValue(cell)))
+                    .ToArray();
+
+                return environments;
             }
 
-            private static IEnumerable<ConfigurationParameter> ParseParameters(IEnumerable<XElement> allRows)
+            private static IEnumerable<ConfigurationParameter> ParseParameters(IEnumerable<XElement> allRows, 
+                ConfigurableEnvironment[] environments)
             {
-                var paramRowsTillFirstBlank = allRows
-                    .Skip(1)
-                    .TakeWhile(row => row.Attributes()
-                        .All(attr => attr.Name != Ns + "Index"));
-
-                return ReadParamsRowByRow(paramRowsTillFirstBlank);
+                return allRows
+                    .Skip(1) // the header row
+                    .TakeWhile(row => !row.Attributes(Ns + "Index").Any()) // till blank row // TODO dry
+                    .Select(row => CreateParameter(row.Elements(Ns + "Cell"), environments));
             }
 
-            private static IEnumerable<ConfigurationParameter> ReadParamsRowByRow(IEnumerable<XElement> paramRows)
+            private static ConfigurationParameter CreateParameter(IEnumerable<XElement> rowCells, 
+                ConfigurableEnvironment[] environments)
             {
-                // TODO: handling blank cells
-                return 
-                    from row in paramRows
-                    let cells = row.Elements(Ns + "Cell").ToArray()
-                    let name = GetCellValue(cells[0])
-                    let defaultValue = GetCellValue(cells[2])
-                    let description = GetCellValue(cells[1])
-                    select new ConfigurationParameter(name, defaultValue)
+                var environmentValuesMapping = new Dictionary<ConfigurableEnvironment, string>();
+
+                var currentColumnIndex = 1;
+                var lastEnvironmentColumnIndex = environments.Length + EnvironmentColumnsShift;
+
+                string paramName = null;
+                string paramDescription = null;
+                string paramDefaultValue = null;
+
+                foreach (var cell in rowCells)
+                {
+                    var cellIndexAttribute = cell.Attributes(Ns + "Index").FirstOrDefault();
+                    if (cellIndexAttribute != null)
                     {
-                        Description = description
-                    };
+                        currentColumnIndex = int.Parse(cellIndexAttribute.Value);
+                        if (currentColumnIndex > lastEnvironmentColumnIndex)
+                        {
+                            break;
+                        }
+                    }
+
+                    string cellValue = GetCellValue(cell);
+
+                    if (currentColumnIndex <= EnvironmentColumnsShift)
+                    {
+                        switch (currentColumnIndex)
+                        {
+                            case 1:
+                                paramName = cellValue;
+                                break;
+                            case 2:
+                                paramDescription = cellValue;
+                                break;
+                            case 3:
+                                paramDefaultValue = cellValue;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        var environment = environments[currentColumnIndex - EnvironmentColumnsShift - 1];
+                        
+                        environmentValuesMapping.Add(environment, cellValue);
+                    }
+
+                    currentColumnIndex++;
+                    if (currentColumnIndex > lastEnvironmentColumnIndex)
+                    {
+                        break;
+                    }
+                }
+
+                return new ConfigurationParameter(paramName, paramDefaultValue, environmentValuesMapping)
+                {
+                    Description = paramDescription
+                };
             }
 
             private static string GetCellValue(XElement cellElement)
