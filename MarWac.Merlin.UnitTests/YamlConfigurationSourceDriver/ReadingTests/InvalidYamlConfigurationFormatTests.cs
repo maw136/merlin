@@ -1,7 +1,7 @@
 ﻿using MarWac.Merlin.UnitTests.Utils;
 using NUnit.Framework;
 
-namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
+namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver.ReadingTests
 {
     [TestFixture]
     public class InvalidYamlConfigurationFormatTests
