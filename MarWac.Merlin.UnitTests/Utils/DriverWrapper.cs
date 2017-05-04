@@ -13,6 +13,9 @@ namespace MarWac.Merlin.UnitTests.Utils
         public static Configuration ReadExcel(string source) => 
             Read(source, new Merlin.ExcelConfigurationSourceDriver());
 
+        public static string WriteYaml(Configuration configuration) =>
+            Write(configuration, new Merlin.YamlConfigurationSourceDriver());
+
         public static string WriteExcel(Configuration configuration) => 
             Write(configuration, new Merlin.ExcelConfigurationSourceDriver());
 

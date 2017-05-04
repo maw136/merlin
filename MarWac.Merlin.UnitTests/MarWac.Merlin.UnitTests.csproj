@@ -86,6 +86,7 @@
     <Compile Include="YamlConfigurationSourceDriver\InvalidYamlConfigurationFormatTests.cs" />
     <Compile Include="YamlConfigurationSourceDriver\ValidEnvironmentsTests.cs" />
     <Compile Include="YamlConfigurationSourceDriver\ValidParametersTests.cs" />
+    <Compile Include="YamlConfigurationSourceDriver\WritingTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
