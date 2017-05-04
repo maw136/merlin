@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
@@ -265,16 +266,66 @@ namespace MarWac.Merlin
                 {
                     new Serializer().Serialize(writer, new
                     {
-                        parameters = _configuration.Parameters
-                            .Select(p => new Dictionary<string, string>
-                            {
-                                { p.Name, p.DefaultValue }
-                            })
+                        environments = _configuration.Environments.Any() 
+                            ? _configuration.Environments.Select(e => e.Name)
+                            : null,
+                        parameters = _configuration.Parameters.Select(MapParamToDictionaryForSerialization)
                     });
 
                     writer.Flush();   
                 }
+            }
 
+            private Dictionary<string, object> MapParamToDictionaryForSerialization(ConfigurationParameter parameter)
+            {
+                return new Dictionary<string, object>
+                {
+                    {parameter.Name, MapParamProperties(parameter)}
+                };
+            }
+
+            private object MapParamProperties(ConfigurationParameter parameter)
+            {
+                if (IsParameterDegenerated(parameter))
+                {
+                    return parameter.DefaultValue;
+                }
+
+                return new Dictionary<string, object>
+                {
+                    {"description", parameter.Description},
+                    {"value", MapParamValues(parameter)}
+                };
+            }
+
+            private static object MapParamValues(ConfigurationParameter parameter)
+            {
+                if (!parameter.Values.Any())
+                {
+                    return parameter.DefaultValue;
+                }
+
+                var values = new List<object>();
+
+                foreach (var environment in parameter.Values.Keys.OrderBy(env => env.Name))
+                {
+                    values.Add(new Dictionary<string, string>
+                    {
+                        {environment.Name, parameter.Values[environment]}
+                    });    
+                }
+
+                values.Add(new Dictionary<string, string>
+                {
+                    {"default", parameter.DefaultValue}
+                });
+
+                return values;
+            }
+
+            private static bool IsParameterDegenerated(ConfigurationParameter parameter)
+            {
+                return string.IsNullOrEmpty(parameter.Description) && !parameter.Values.Any();
             }
         }
     }
