@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace MarWac.Merlin
+namespace MarWac.Merlin.SourceDrivers
 {
     /// <summary>
     /// Retrieves/stores the configuration from/to Excel XML 2003 format stream.

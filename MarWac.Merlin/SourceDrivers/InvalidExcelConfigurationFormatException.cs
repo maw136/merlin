@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace MarWac.Merlin
+namespace MarWac.Merlin.SourceDrivers
 {
     public class InvalidExcelConfigurationFormatException : Exception
     {

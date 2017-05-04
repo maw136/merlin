@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace MarWac.Merlin
+namespace MarWac.Merlin.SourceDrivers
 {
     /// <summary>
     /// Retrieves/stores the configuration from/to some stream.

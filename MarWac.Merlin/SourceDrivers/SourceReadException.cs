@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace MarWac.Merlin
+namespace MarWac.Merlin.SourceDrivers
 {
     /// <summary>
     /// General exception thrown while reading configuration sources. Could be caused by many cases, e.g. stream

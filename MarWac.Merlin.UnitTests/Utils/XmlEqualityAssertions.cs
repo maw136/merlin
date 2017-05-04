@@ -16,7 +16,7 @@ namespace MarWac.Merlin.UnitTests.Utils
                                          $"/x:Row[{cell.Row}]/x:Cell[{cell.Column}]/x:Data/text()", Is.EqualTo(value))
                                 .WithNamespaceContext(new Dictionary<string, string>
                                 {
-                                    { "x", Merlin.ExcelConfigurationSourceDriver.Ns.NamespaceName }
+                                    { "x", SourceDrivers.ExcelConfigurationSourceDriver.Ns.NamespaceName }
                                 });
             Assert.That(actual, constraint);
         }

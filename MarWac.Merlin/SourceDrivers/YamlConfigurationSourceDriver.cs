@@ -6,7 +6,7 @@ using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 
-namespace MarWac.Merlin
+namespace MarWac.Merlin.SourceDrivers
 {
     /// <summary>
     /// Retrieves/stores configuration from/to YAML sources.

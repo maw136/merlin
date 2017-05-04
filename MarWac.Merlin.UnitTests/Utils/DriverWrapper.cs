@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text;
+using MarWac.Merlin.SourceDrivers;
 
 namespace MarWac.Merlin.UnitTests.Utils
 {
@@ -8,16 +9,17 @@ namespace MarWac.Merlin.UnitTests.Utils
     /// </summary>
     internal static class DriverWrapper
     {
-        public static Configuration ReadYaml(string source) => Read(source, new Merlin.YamlConfigurationSourceDriver());
+        public static Configuration ReadYaml(string source) => 
+            Read(source, new SourceDrivers.YamlConfigurationSourceDriver());
 
         public static Configuration ReadExcel(string source) => 
-            Read(source, new Merlin.ExcelConfigurationSourceDriver());
+            Read(source, new SourceDrivers.ExcelConfigurationSourceDriver());
 
         public static string WriteYaml(Configuration configuration) =>
-            Write(configuration, new Merlin.YamlConfigurationSourceDriver());
+            Write(configuration, new SourceDrivers.YamlConfigurationSourceDriver());
 
         public static string WriteExcel(Configuration configuration) => 
-            Write(configuration, new Merlin.ExcelConfigurationSourceDriver());
+            Write(configuration, new SourceDrivers.ExcelConfigurationSourceDriver());
 
         private static Configuration Read(string source, ConfigurationSourceDriver driver)
         {

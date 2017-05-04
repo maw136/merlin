@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using NUnit.Framework;
 using static MarWac.Merlin.UnitTests.Utils.DriverWrapper;
 

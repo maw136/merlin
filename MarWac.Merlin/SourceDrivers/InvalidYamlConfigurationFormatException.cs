@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace MarWac.Merlin
+namespace MarWac.Merlin.SourceDrivers
 {
     /// <summary>
     /// Thrown when configuration domain expressed with YAML source is invalid (e.g missing or disorder of expected 

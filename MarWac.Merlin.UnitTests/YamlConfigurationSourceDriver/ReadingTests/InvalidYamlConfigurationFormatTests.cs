@@ -1,4 +1,5 @@
-﻿using MarWac.Merlin.UnitTests.Utils;
+﻿using MarWac.Merlin.SourceDrivers;
+using MarWac.Merlin.UnitTests.Utils;
 using NUnit.Framework;
 
 namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver.ReadingTests

@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using MarWac.Merlin.SourceDrivers;
 using NUnit.Framework;
 using static MarWac.Merlin.UnitTests.Utils.DriverWrapper;
 
