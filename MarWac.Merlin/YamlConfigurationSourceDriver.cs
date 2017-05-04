@@ -290,11 +290,16 @@ namespace MarWac.Merlin
                     return parameter.DefaultValue;
                 }
 
-                return new Dictionary<string, object>
+                var regularMapping = new Dictionary<string, object>();
+
+                if (!string.IsNullOrEmpty(parameter.Description))
                 {
-                    {"description", parameter.Description},
-                    {"value", MapParamValues(parameter)}
-                };
+                    regularMapping.Add("description", parameter.Description);
+                }
+
+                regularMapping.Add("value", MapParamValues(parameter));
+
+                return regularMapping;
             }
 
             private static object MapParamValues(ConfigurationParameter parameter)
@@ -314,10 +319,13 @@ namespace MarWac.Merlin
                     });    
                 }
 
-                values.Add(new Dictionary<string, string>
+                if (!string.IsNullOrEmpty(parameter.DefaultValue))
                 {
-                    {"default", parameter.DefaultValue}
-                });
+                    values.Add(new Dictionary<string, string>
+                    {
+                        {"default", parameter.DefaultValue}
+                    });
+                }
 
                 return values;
             }
