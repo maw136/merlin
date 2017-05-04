@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
+using YamlDotNet.Serialization;
 
 namespace MarWac.Merlin
 {
@@ -37,7 +39,7 @@ namespace MarWac.Merlin
         /// <param name="configuration">Configuration instance to be stored to the stream</param>
         public override void Write(Stream output, Configuration configuration)
         {
-            throw new System.NotImplementedException();
+            new Writer(configuration).Write(output);
         }
 
         private class Reader
@@ -245,6 +247,34 @@ namespace MarWac.Merlin
                 {
                     throw new InvalidYamlConfigurationFormatException($"Unknown section `{firstUnknownSection}`.");
                 }
+            }
+        }
+
+        private class Writer
+        {
+            private readonly Configuration _configuration;
+
+            public Writer(Configuration configuration)
+            {
+                _configuration = configuration;
+            }
+
+            public void Write(Stream output)
+            {
+                using (var writer = new StreamWriter(output, Encoding.UTF8, bufferSize: 512, leaveOpen: true))
+                {
+                    new Serializer().Serialize(writer, new
+                    {
+                        parameters = _configuration.Parameters
+                            .Select(p => new Dictionary<string, string>
+                            {
+                                { p.Name, p.DefaultValue }
+                            })
+                    });
+
+                    writer.Flush();   
+                }
+
             }
         }
     }
