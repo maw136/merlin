@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using NUnit.Framework;
 using static MarWac.Merlin.UnitTests.Utils.DriverWrapper;
 
@@ -60,6 +61,52 @@ parameters:
     - Local: 15
     - Test: 25
     - default: 5
+";
+
+            Assert.That(actual, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Write_GivenTwoParametersWithMultipleEnvironmentValues_WritesCorrectly()
+        {
+            var configuration = new Configuration(
+                new[]
+                {
+                    new ConfigurationParameter("maxThreads", null, new Dictionary<ConfigurableEnvironment, string>
+                    {
+                        {new ConfigurableEnvironment("Local"), "15"},
+                        {new ConfigurableEnvironment("Test"), "25"}
+                    })
+                    {
+                        Description = "Max number of threads"
+                    },
+                    new ConfigurationParameter("timeoutSecs", "40", new Dictionary<ConfigurableEnvironment, string>
+                    {
+                        {new ConfigurableEnvironment("Test"), "60"}
+                    })
+                },
+                new[]
+                {
+                    new ConfigurableEnvironment("Local"),
+                    new ConfigurableEnvironment("Test")
+                });
+
+            var actual = WriteYaml(configuration);
+
+            var expected =
+@"environments:
+- Local
+- Test
+parameters:
+- maxThreads:
+    description: Max number of threads
+    value:
+    - Local: 15
+    - Test: 25
+- timeoutSecs:
+    value:
+    - Test: 60
+    - default: 40
 ";
 
             Assert.That(actual, Is.EqualTo(expected));
