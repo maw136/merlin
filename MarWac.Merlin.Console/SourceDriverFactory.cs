@@ -3,7 +3,7 @@ using MarWac.Merlin.SourceDrivers;
 
 namespace MarWac.Merlin.Console
 {
-    internal class SourceDriverFactory
+    internal static class SourceDriverFactory
     {
         public static ConfigurationSourceDriver CreateByFileName(string fileName)
         {

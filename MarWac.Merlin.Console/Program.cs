@@ -14,6 +14,11 @@ namespace MarWac.Merlin.Console
                 return;
             }
 
+            TranformSourceFileIntoTargetFile(options);
+        }
+
+        private static void TranformSourceFileIntoTargetFile(Options options)
+        {
             using (var source = new FileStream(options.SourceFile, FileMode.Open, FileAccess.Read))
             using (var target = new FileStream(options.TargetFile, FileMode.OpenOrCreate, FileAccess.Write))
             {
