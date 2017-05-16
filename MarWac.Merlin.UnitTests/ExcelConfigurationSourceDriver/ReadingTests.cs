@@ -253,5 +253,42 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
             Assert.That(config.Environments.Count, Is.EqualTo(1));
             Assert.That(config.Parameters.Count, Is.EqualTo(0));
         }
+
+        [Test]
+        public void Read_EmptyCells_DoesNotProduceEnvironmentValueMappingForSuchCells()
+        {
+            var source =
+                $@"<?xml version=""1.0""?>
+                <?mso-application progid=""Excel.Sheet""?>
+                <Workbook xmlns=""urn:schemas-microsoft-com:office:spreadsheet""
+                       xmlns:ss=""urn:schemas-microsoft-com:office:spreadsheet"">  
+                  <Worksheet ss:Name=""Sheet1"">
+                    <Table>
+                      <Row>
+                        <Cell><Data ss:Type=""String"">Name</Data></Cell>
+                        <Cell><Data ss:Type=""String"">Description</Data></Cell>
+                        <Cell><Data ss:Type=""String"">Default</Data></Cell>
+                        <Cell><Data ss:Type=""String"">Localhost</Data></Cell>
+                        <Cell><Data ss:Type=""String"">Test</Data></Cell>
+                        <Cell><Data ss:Type=""String"">Prod</Data></Cell>
+                      </Row>
+                      <Row>
+                        <Cell><Data ss:Type=""String"">maxThreads</Data></Cell>
+                        <Cell ss:Index=""3""><Data ss:Type=""String""></Data></Cell>
+                        <Cell><Data ss:Type=""String"">15</Data></Cell>
+                        <Cell ss:Index=""6""><Data ss:Type=""String""></Data></Cell>
+                      </Row>
+                    </Table>
+                  </Worksheet>
+                </Workbook>";
+
+            var config = ReadExcel(source);
+
+            var parameter = config.Parameters.ElementAt(0);
+            Assert.That(parameter.DefaultValue, Is.Null);
+            Assert.That(parameter.Values[new ConfigurableEnvironment("Localhost")], Is.EqualTo("15"));
+            Assert.That(parameter.Values.ContainsKey(new ConfigurableEnvironment("Test")), Is.False);
+            Assert.That(parameter.Values.ContainsKey(new ConfigurableEnvironment("Prod")), Is.False);
+        }
     }
 }
