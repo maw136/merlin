@@ -42,12 +42,6 @@ namespace MarWac.Merlin
             DefaultValue = defaultValue;
             Values = new ReadOnlyDictionary<ConfigurableEnvironment, string>(
                 values ?? new Dictionary<ConfigurableEnvironment, string>());
-
-            if (string.IsNullOrEmpty(defaultValue) && !Values.Any())
-            {
-                throw new ArgumentException(
-                    $"Either default value or value mapping per environment of parameter `{name}` must be non empty.");
-            }
         }
     }
 }
