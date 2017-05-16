@@ -137,6 +137,11 @@ namespace MarWac.Merlin.SourceDrivers
             {
                 string cellValue = GetCellValue(cell);
 
+                if (string.IsNullOrEmpty(cellValue))
+                {
+                    return;
+                }
+
                 if (currentColumnIndex <= EnvironmentColumnsShift)
                 {
                     switch (currentColumnIndex)
