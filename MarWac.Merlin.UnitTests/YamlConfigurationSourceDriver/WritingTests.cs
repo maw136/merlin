@@ -104,8 +104,70 @@ parameters:
     - Test: 25
 - timeoutSecs:
     value:
+    - Local: ''
     - Test: 60
     - default: 40
+";
+
+            Assert.That(actual, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Write_GivenEnvironmentValueEqualsToDefaultValue_DoesNotSerializeEnvironmentValueAtAll()
+        {
+            var configuration = new Configuration(
+                new[]
+                {
+                    new ConfigurationParameter("maxThreads", "15", new Dictionary<ConfigurableEnvironment, string>
+                    {
+                        {new ConfigurableEnvironment("Local"), "15"},
+                    })
+                },
+                new[]
+                {
+                    new ConfigurableEnvironment("Local"),
+                    new ConfigurableEnvironment("Test")
+                });
+
+            var actual = WriteYaml(configuration);
+
+            var expected =
+@"environments:
+- Local
+- Test
+parameters:
+- maxThreads:
+    value:
+    - Test: ''
+    - default: 15
+";
+
+            Assert.That(actual, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Write_GivenAllEnvironmentValuesEqualToDefault_CollapsesParamDefinitionToImplicitDefaultValueOnly()
+        {
+            var configuration = new Configuration(
+                new[]
+                {
+                    new ConfigurationParameter("maxThreads", "15", new Dictionary<ConfigurableEnvironment, string>
+                    {
+                        {new ConfigurableEnvironment("Local"), "15"},
+                    })
+                },
+                new[]
+                {
+                    new ConfigurableEnvironment("Local"),
+                });
+
+            var actual = WriteYaml(configuration);
+
+            var expected =
+@"environments:
+- Local
+parameters:
+- maxThreads: 15
 ";
 
             Assert.That(actual, Is.EqualTo(expected));
