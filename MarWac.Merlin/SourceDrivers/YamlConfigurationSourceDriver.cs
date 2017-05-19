@@ -285,11 +285,16 @@ namespace MarWac.Merlin.SourceDrivers
 
             private object MapParamProperties(ConfigurationParameter parameter)
             {
-                if (IsParameterDegenerated(parameter))
+                if (IsEntireParameterDegenerated(parameter))
                 {
                     return parameter.DefaultValue;
                 }
 
+                return GetParamRegularPropertiesMapping(parameter);
+            }
+
+            private object GetParamRegularPropertiesMapping(ConfigurationParameter parameter)
+            {
                 var regularMapping = new Dictionary<string, object>();
 
                 if (!string.IsNullOrEmpty(parameter.Description))
@@ -304,60 +309,97 @@ namespace MarWac.Merlin.SourceDrivers
 
             private object MapParamValues(ConfigurationParameter parameter)
             {
-                if ((!parameter.Values.Any()
-                    || (parameter.Values.Count == _configuration.Environments.Count
-                        && parameter.Values.All(v => v.Value == parameter.DefaultValue))
-                    || (parameter.Values.All(v => ConfigurationParameter.IsValueUnknown(v.Value))
-                        && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue))))
+                if (IsParameterValueDegenerated(parameter))
                 {
                     return parameter.DefaultValue;
                 }
 
+                return GetEnvironmentValuesMapping(parameter);
+            }
+
+            private object GetEnvironmentValuesMapping(ConfigurationParameter parameter)
+            {
                 var environmentsAvailableSorted = _configuration.Environments.OrderBy(env => env.Name);
-                var values = new List<object>();
+                var environmentValuesMapping = new List<object>();
 
                 foreach (var environment in environmentsAvailableSorted)
                 {
-                    string environmentValue;
-                    var isEnvironmentValueDefined = parameter.Values.TryGetValue(environment, out environmentValue);
-
-                    if ((!isEnvironmentValueDefined && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue))
-                        || (isEnvironmentValueDefined 
-                            && (ConfigurationParameter.IsValueUnknown(environmentValue) && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue)
-                                || environmentValue == parameter.DefaultValue)))
-                    {
-                        continue;
-                    }
-
-                    var valueToSerialize = isEnvironmentValueDefined 
-                        ? parameter.Values[environment] 
-                        : string.Empty;
-
-                    values.Add(new Dictionary<string, string>
-                    {
-                        {environment.Name, valueToSerialize}
-                    });    
+                    AddEnvironmentValueIfOtherThanDefault(environmentValuesMapping, parameter, environment);
                 }
 
+                AddDefaultValueIfKnown(environmentValuesMapping, parameter);
+
+                return environmentValuesMapping;
+            }
+
+            private static void AddEnvironmentValueIfOtherThanDefault(List<object> environmentValuesMapping, 
+                ConfigurationParameter parameter, ConfigurableEnvironment environment)
+            {
+                string valueToSerialize;
+                if (IsEnvironmentValueSameAsDefault(parameter, environment, out valueToSerialize))
+                {
+                    return;
+                }
+
+                environmentValuesMapping.Add(new Dictionary<string, string>
+                {
+                    {environment.Name, valueToSerialize ?? string.Empty}
+                });
+            }
+
+            private static void AddDefaultValueIfKnown(List<object> environmentValuesMapping, 
+                ConfigurationParameter parameter)
+            {
                 if (!ConfigurationParameter.IsValueUnknown(parameter.DefaultValue))
                 {
-                    values.Add(new Dictionary<string, string>
+                    environmentValuesMapping.Add(new Dictionary<string, string>
                     {
                         {"default", parameter.DefaultValue}
                     });
                 }
-
-                return values;
             }
 
-            private bool IsParameterDegenerated(ConfigurationParameter parameter)
+            private static bool IsEnvironmentValueSameAsDefault(
+                ConfigurationParameter parameter, ConfigurableEnvironment environment, 
+                out string environmentValue)
             {
-                return string.IsNullOrEmpty(parameter.Description) 
-                    && (!parameter.Values.Any() 
-                    || (parameter.Values.Count == _configuration.Environments.Count 
-                        && parameter.Values.All(v => v.Value == parameter.DefaultValue))
-                    || (parameter.Values.All(v => ConfigurationParameter.IsValueUnknown(v.Value)) 
-                        && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue)));
+                var isEnvironmentValueDefined = parameter.Values.TryGetValue(environment, out environmentValue);
+
+                if (!isEnvironmentValueDefined && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue)
+                    || isEnvironmentValueDefined 
+                       && ((ConfigurationParameter.IsValueUnknown(environmentValue) &&
+                           ConfigurationParameter.IsValueUnknown(parameter.DefaultValue))
+                           || environmentValue == parameter.DefaultValue))
+                {
+                    return true;
+                }
+
+                return false;
+            }
+
+            private bool IsEntireParameterDegenerated(ConfigurationParameter parameter)
+            {
+                return string.IsNullOrEmpty(parameter.Description) && IsParameterValueDegenerated(parameter);
+            }
+
+            private bool IsParameterValueDegenerated(ConfigurationParameter parameter)
+            {
+                return !parameter.Values.Any() 
+                       || AreAllParamValuesKnownAndEqualToDefaultValue(parameter)
+                       || AreAllParamValuesUnknownAndDefaultValueIsAlsoUnknown(parameter);
+            }
+
+            private static bool AreAllParamValuesUnknownAndDefaultValueIsAlsoUnknown(
+                ConfigurationParameter parameter)
+            {
+                return parameter.Values.All(v => ConfigurationParameter.IsValueUnknown(v.Value)) 
+                       && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue);
+            }
+
+            private bool AreAllParamValuesKnownAndEqualToDefaultValue(ConfigurationParameter parameter)
+            {
+                return parameter.Values.Count == _configuration.Environments.Count 
+                       && parameter.Values.All(v => v.Value == parameter.DefaultValue);
             }
         }
     }
