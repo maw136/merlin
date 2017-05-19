@@ -302,24 +302,44 @@ namespace MarWac.Merlin.SourceDrivers
                 return regularMapping;
             }
 
-            private static object MapParamValues(ConfigurationParameter parameter)
+            private object MapParamValues(ConfigurationParameter parameter)
             {
-                if (!parameter.Values.Any())
+                if ((!parameter.Values.Any()
+                    || (parameter.Values.Count == _configuration.Environments.Count
+                        && parameter.Values.All(v => v.Value == parameter.DefaultValue))
+                    || (parameter.Values.All(v => ConfigurationParameter.IsValueUnknown(v.Value))
+                        && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue))))
                 {
                     return parameter.DefaultValue;
                 }
 
+                var environmentsAvailableSorted = _configuration.Environments.OrderBy(env => env.Name);
                 var values = new List<object>();
 
-                foreach (var environment in parameter.Values.Keys.OrderBy(env => env.Name))
+                foreach (var environment in environmentsAvailableSorted)
                 {
+                    string environmentValue;
+                    var isEnvironmentValueDefined = parameter.Values.TryGetValue(environment, out environmentValue);
+
+                    if ((!isEnvironmentValueDefined && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue))
+                        || (isEnvironmentValueDefined 
+                            && (ConfigurationParameter.IsValueUnknown(environmentValue) && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue)
+                                || environmentValue == parameter.DefaultValue)))
+                    {
+                        continue;
+                    }
+
+                    var valueToSerialize = isEnvironmentValueDefined 
+                        ? parameter.Values[environment] 
+                        : string.Empty;
+
                     values.Add(new Dictionary<string, string>
                     {
-                        {environment.Name, parameter.Values[environment]}
+                        {environment.Name, valueToSerialize}
                     });    
                 }
 
-                if (!string.IsNullOrEmpty(parameter.DefaultValue))
+                if (!ConfigurationParameter.IsValueUnknown(parameter.DefaultValue))
                 {
                     values.Add(new Dictionary<string, string>
                     {
@@ -330,9 +350,14 @@ namespace MarWac.Merlin.SourceDrivers
                 return values;
             }
 
-            private static bool IsParameterDegenerated(ConfigurationParameter parameter)
+            private bool IsParameterDegenerated(ConfigurationParameter parameter)
             {
-                return string.IsNullOrEmpty(parameter.Description) && !parameter.Values.Any();
+                return string.IsNullOrEmpty(parameter.Description) 
+                    && (!parameter.Values.Any() 
+                    || (parameter.Values.Count == _configuration.Environments.Count 
+                        && parameter.Values.All(v => v.Value == parameter.DefaultValue))
+                    || (parameter.Values.All(v => ConfigurationParameter.IsValueUnknown(v.Value)) 
+                        && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue)));
             }
         }
     }

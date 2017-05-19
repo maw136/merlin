@@ -29,6 +29,13 @@ namespace MarWac.Merlin
         /// </summary>
         public IReadOnlyDictionary<ConfigurableEnvironment, string> Values { get; }
 
+        /// <summary>
+        /// Answers the question whether a given value is unknown (not defined, no value, not applicable, etc.)
+        /// </summary>
+        /// <param name="value">The value to test whether is known or not</param>
+        /// <returns><c>true</c> if the value is unknown.</returns>
+        public static bool IsValueUnknown(string value) => string.IsNullOrEmpty(value);
+
         public ConfigurationParameter(string name, string defaultValue,
             IDictionary<ConfigurableEnvironment, string> values = null)
         {
