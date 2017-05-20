@@ -228,6 +228,10 @@ namespace MarWac.Merlin.SourceDrivers
                     {
                         valuesInEnvironments[index] = parameterEnvironmentValue;
                     }
+                    else
+                    {
+                        valuesInEnvironments[index] = parameter.DefaultValue;
+                    }
                 }
                 return valuesInEnvironments;
             }
