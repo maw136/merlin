@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AnalyzeParams>
   <TargetExecutable>./packages/NUnit.ConsoleRunner.3.6.1/tools/nunit3-console.exe</TargetExecutable>
-  <TargetArguments>MarWac.Merlin.UnitTests/bin/debug/MarWac.Merlin.UnitTests.dll</TargetArguments>
+  <TargetArguments>--result=TestResult.xml;format=nunit2 MarWac.Merlin.UnitTests/bin/Release/MarWac.Merlin.UnitTests.dll</TargetArguments>
   <TargetWorkingDir>.</TargetWorkingDir>
-  <Output>Coverage.html</Output>
+  <Output>dotCover.html</Output>
   <ReportType>HTML</ReportType>
   <Filters>
     <IncludeFilters>
