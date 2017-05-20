@@ -20,7 +20,7 @@ namespace MarWac.Merlin.Console
         private static void TranformSourceFileIntoTargetFile(Options options)
         {
             using (var source = new FileStream(options.SourceFile, FileMode.Open, FileAccess.Read))
-            using (var target = new FileStream(options.TargetFile, FileMode.OpenOrCreate, FileAccess.Write))
+            using (var target = new FileStream(options.TargetFile, FileMode.Create, FileAccess.Write))
             {
                 var sourceDriver = SourceDriverFactory.CreateByFileName(options.SourceFile);
                 var targetDriver = SourceDriverFactory.CreateByFileName(options.TargetFile);
