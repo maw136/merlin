@@ -67,8 +67,7 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
                 {
                     new ConfigurationParameter("maxThreads", null, new Dictionary<ConfigurableEnvironment, string>
                     {
-                        {new ConfigurableEnvironment("Local"), "15"},
-                        {new ConfigurableEnvironment("Test"), "25"}
+                        {new ConfigurableEnvironment("Local"), "15"}
                     })
                     {
                         Description = "Max number of threads"
@@ -93,12 +92,12 @@ namespace MarWac.Merlin.UnitTests.ExcelConfigurationSourceDriver
             AssertCell(actual, new Cell(2, 2), "Max number of threads");
             AssertCell(actual, new Cell(2, 3), string.Empty);
             AssertCell(actual, new Cell(2, 4), "15");
-            AssertCell(actual, new Cell(2, 5), "25");
+            AssertCell(actual, new Cell(2, 5), string.Empty);
 
             AssertCell(actual, new Cell(3, 1), "timeoutSecs");
             AssertCell(actual, new Cell(3, 2), string.Empty);
             AssertCell(actual, new Cell(3, 3), "40");
-            AssertCell(actual, new Cell(3, 4), string.Empty);
+            AssertCell(actual, new Cell(3, 4), "40");
             AssertCell(actual, new Cell(3, 5), "60");
         }
     }
