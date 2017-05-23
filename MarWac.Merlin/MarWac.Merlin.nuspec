@@ -8,11 +8,11 @@
     <owners>$author$</owners>
     <licenseUrl>https://github.com/wachulski/merlin/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/wachulski/merlin</projectUrl>
-    <iconUrl>https://github.com/wachulski/merlin/blob/master/icon.png</iconUrl>
+    <iconUrl>http://wachulski.com/Content/images/mw-logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>Initial release of basic functionality two-way transforming YAML-EXCEL.</releaseNotes>
-    <copyright>$copyright%</copyright>
+    <copyright>$copyright$</copyright>
     <tags>configuration parameters</tags>
   </metadata>
 </package>

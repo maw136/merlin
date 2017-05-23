@@ -56,6 +56,7 @@
     <Compile Include="SourceDriverFactory.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="MarWac.Merlin.Console.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -63,11 +64,6 @@
       <Project>{6a6f4d58-2ea6-49cb-bef6-554e8bf69db4}</Project>
       <Name>MarWac.Merlin</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\icon.png">
-      <Link>icon.png</Link>
-    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
