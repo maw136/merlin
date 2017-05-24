@@ -183,6 +183,7 @@ namespace MarWac.Merlin.SourceDrivers
 
         private class Writer
         {
+            private const string MainSheetName = "ConfigurationDictionary";
             private readonly Configuration _configuration;
             private readonly ConfigurableEnvironment[] _environments;
             private static readonly string[] HeaderColumnNames = {"Name", "Description", "Default"};
@@ -197,7 +198,7 @@ namespace MarWac.Merlin.SourceDrivers
             {
                 var content = new XStreamingElement(Ns + "Workbook",
                     new XAttribute(XNamespace.Xmlns + "ss", Ns),
-                    new XStreamingElement(Ns + "Worksheet", new XAttribute(Ns + "Name", "Sheet1"),
+                    new XStreamingElement(Ns + "Worksheet", new XAttribute(Ns + "Name", MainSheetName),
                         new XStreamingElement(Ns + "Table",
                             CreateHeaderRow(),
                             CreateParameterRows())));
