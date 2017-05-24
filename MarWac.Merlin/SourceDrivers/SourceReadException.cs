@@ -9,18 +9,22 @@ namespace MarWac.Merlin.SourceDrivers
     /// </summary>
     public class SourceReadException : Exception
     {
+        /// <inheritdoc cref="Exception"/>
         public SourceReadException()
         {
         }
 
+        /// <inheritdoc cref="Exception"/>
         public SourceReadException(string message) : base(message)
         {
         }
 
+        /// <inheritdoc cref="Exception"/>
         public SourceReadException(string message, Exception innerException) : base(message, innerException)
         {
         }
 
+        /// <inheritdoc cref="Exception"/>
         protected SourceReadException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }

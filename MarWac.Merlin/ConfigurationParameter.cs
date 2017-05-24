@@ -36,6 +36,12 @@ namespace MarWac.Merlin
         /// <returns><c>true</c> if the value is unknown.</returns>
         public static bool IsValueUnknown(string value) => string.IsNullOrEmpty(value);
 
+        /// <summary>
+        /// Creates a parameter with configured as provided.
+        /// </summary>
+        /// <param name="name">The name of the parameter</param>
+        /// <param name="defaultValue">The default value of the parameter</param>
+        /// <param name="values">Values setup for environments</param>
         public ConfigurationParameter(string name, string defaultValue,
             IDictionary<ConfigurableEnvironment, string> values = null)
         {
