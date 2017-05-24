@@ -7,6 +7,7 @@ namespace MarWac.Merlin.SourceDrivers
     /// Thrown when configuration domain expressed with YAML source is invalid (e.g missing or disorder of expected 
     /// YAML node names/sequences/etc.). In this case YAML source is valid according to the YAML format standard.
     /// </summary>
+    [Serializable]
     public class InvalidYamlConfigurationFormatException : SourceReadException
     {
         /// <inheritdoc cref="Exception"/>

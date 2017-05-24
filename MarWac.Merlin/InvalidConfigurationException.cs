@@ -6,6 +6,7 @@ namespace MarWac.Merlin
     /// <summary>
     /// Thrown when domain rules of configuration are infringed.
     /// </summary>
+    [Serializable]
     public class InvalidConfigurationException : Exception
     {
         /// <inheritdoc cref="Exception"/>

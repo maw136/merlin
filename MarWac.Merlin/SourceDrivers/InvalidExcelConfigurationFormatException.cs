@@ -6,6 +6,7 @@ namespace MarWac.Merlin.SourceDrivers
     /// <summary>
     /// Represents errors that occur during Excel XML source reading.
     /// </summary>
+    [Serializable]
     public class InvalidExcelConfigurationFormatException : Exception
     {
         /// <inheritdoc cref="Exception"/>
