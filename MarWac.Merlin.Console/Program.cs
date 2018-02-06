@@ -1,20 +1,27 @@
 ﻿using System.IO;
+using System.Linq;
+using System.Reflection;
 using CommandLine;
+using CommandLine.Text;
 
 namespace MarWac.Merlin.Console
 {
-    static class Program
+    internal static class Program
     {
         private static void Main(string[] args)
         {
-            var options = new Options();
-
-            if (!Parser.Default.ParseArguments(args, options))
+            var result = Parser.Default.ParseArguments<Options>(args)
+                .WithParsed(TranformSourceFileIntoTargetFile);
+            if (result.Tag == ParserResultType.NotParsed)
             {
-                return;
+                var help = HelpText.AutoBuild(result,
+                    current => HelpText.DefaultParsingErrorsHandler(result, current), null);
+                var assemblyName = Assembly.GetExecutingAssembly().GetName();
+                help.Heading = new HeadingInfo(assemblyName.Name, assemblyName.Version.ToString(3));
+                help.AddPostOptionsLine(
+                    "Currently only .xml (Excel 2003 XML) and .yml (YAML) formats are supported.");
+                System.Console.WriteLine(help);
             }
-
-            TranformSourceFileIntoTargetFile(options);
         }
 
         private static void TranformSourceFileIntoTargetFile(Options options)

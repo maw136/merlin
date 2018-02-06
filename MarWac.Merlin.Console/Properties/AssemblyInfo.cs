@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 using CommandLine;
+using CommandLine.Text;
 
 [assembly: AssemblyTitle("MarWac.Merlin.Console")]
 [assembly: AssemblyDescription("Console application to execute Merlin configuration management through text commands.")]
