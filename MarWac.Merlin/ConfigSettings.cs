@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace MarWac.Merlin
@@ -7,14 +8,14 @@ namespace MarWac.Merlin
     /// <summary>
     /// Represents configuration of some entity/system. Instances once constructed are immutable.
     /// </summary>
-    public class Configuration
+    public class ConfigSettings
     {
         /// <summary>
         /// Creates configuration defined with parameters.
         /// </summary>
         /// <param name="parameters">Parameters which constitute configuration</param>
         /// <param name="environments">Optional environments in which parameters may have defined specific values</param>
-        public Configuration(IEnumerable<ConfigurationParameter> parameters,
+        public ConfigSettings(IEnumerable<ConfigurationParameter> parameters,
             IEnumerable<ConfigurableEnvironment> environments = null)
         {
             if (parameters == null)
@@ -64,10 +65,10 @@ namespace MarWac.Merlin
             public void Validate()
             {
                 ValidateDuplicates(_environmentsSoFar, _environments,
-                     env => string.Format(DuplicationErrorMessageFormat, "Environment", env.Name));
+                     env => string.Format(CultureInfo.InvariantCulture, DuplicationErrorMessageFormat, "Environment", env.Name));
 
                 ValidateDuplicates(_parameterNamesSoFar, _parameters.Select(p => p.Name),
-                     paramName => string.Format(DuplicationErrorMessageFormat, "Parameter", paramName));
+                     paramName => string.Format(CultureInfo.InvariantCulture, DuplicationErrorMessageFormat, "Parameter", paramName));
 
                 ValidateIfParametersConfiguredForKnownEnvironments();
             }
@@ -89,7 +90,7 @@ namespace MarWac.Merlin
             }
 
             private static void ValidateDuplicates<T>(
-                ISet<T> itemsSoFar, IEnumerable<T> items, Func<T, string> errorMessageGenerator) 
+                ISet<T> itemsSoFar, IEnumerable<T> items, Func<T, string> errorMessageGenerator)
                 where T : IEquatable<T>
             {
                 foreach (var item in items)

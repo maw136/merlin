@@ -11,7 +11,7 @@ namespace MarWac.Merlin.UnitTests
         [SuppressMessage("ReSharper", "ObjectCreationAsStatement")]
         public void Ctor_GivenDoubledEnvironments_Throws()
         {
-            var ex = Assert.Throws<InvalidConfigurationException>(() => new Configuration(
+            var ex = Assert.Throws<InvalidConfigurationException>(() => new ConfigSettings(
                 new[]
                 {
                     new ConfigurationParameter("threadLimit", "20")
@@ -29,7 +29,7 @@ namespace MarWac.Merlin.UnitTests
         [SuppressMessage("ReSharper", "ObjectCreationAsStatement")]
         public void Ctor_GivenDoubledParameters_Throws()
         {
-            var ex = Assert.Throws<InvalidConfigurationException>(() => new Configuration(
+            var ex = Assert.Throws<InvalidConfigurationException>(() => new ConfigSettings(
                 new[]
                 {
                     new ConfigurationParameter("threadLimit", "20"),
@@ -43,7 +43,7 @@ namespace MarWac.Merlin.UnitTests
         [SuppressMessage("ReSharper", "ObjectCreationAsStatement")]
         public void Ctor_GivenParameterValueDefinedForUnknownEnvironment_Throws()
         {
-            var ex = Assert.Throws<InvalidConfigurationException>(() => new Configuration(
+            var ex = Assert.Throws<InvalidConfigurationException>(() => new ConfigSettings(
                 new[]
                 {
                     new ConfigurationParameter("callTimeoutSeconds", null,

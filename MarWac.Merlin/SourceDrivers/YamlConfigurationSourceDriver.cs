@@ -9,7 +9,7 @@ using YamlDotNet.Serialization;
 namespace MarWac.Merlin.SourceDrivers
 {
     /// <summary>
-    /// Retrieves/stores configuration from/to YAML sources.
+    /// Retrieves/stores configSettings from/to YAML sources.
     /// </summary>
     public class YamlConfigurationSourceDriver : ConfigurationSourceDriver
     {
@@ -20,26 +20,26 @@ namespace MarWac.Merlin.SourceDrivers
         private const string ParameterDefaultValuePropertyName = "default";
 
         /// <summary>
-        /// Retrieves configuration from a YAML source stream.
+        /// Retrieves configSettings from a YAML source stream.
         /// </summary>
         /// <param name="source">YAML source stream</param>
-        /// <returns>Configuration instance filled with data from the YAML source</returns>
+        /// <returns>ConfigSettings instance filled with data from the YAML source</returns>
         /// <exception cref="SourceReadException">Thrown if the source breaks YAML syntax.</exception>
         /// <exception cref="InvalidYamlConfigurationFormatException">Thrown if YAML source does not contain expected
         /// content format.</exception>
-        public override Configuration Read(Stream source)
+        public override ConfigSettings Read(Stream source)
         {
             return new Reader(source).Read();
         }
 
         /// <summary>
-        /// Stores the configuration to the YAML output stream.
+        /// Stores the configSettings to the YAML output stream.
         /// </summary>
-        /// <param name="output">An output stream to store the configuration</param>
-        /// <param name="configuration">Configuration instance to be stored to the stream</param>
-        public override void Write(Stream output, Configuration configuration)
+        /// <param name="output">An output stream to store the configSettings</param>
+        /// <param name="configSettings">ConfigSettings instance to be stored to the stream</param>
+        public override void Write(Stream output, ConfigSettings configSettings)
         {
-            new Writer(configuration).Write(output);
+            new Writer(configSettings).Write(output);
         }
 
         private class Reader
@@ -55,13 +55,13 @@ namespace MarWac.Merlin.SourceDrivers
                 _parametersList = new List<ConfigurationParameter>();
             }
 
-            public Configuration Read()
+            public ConfigSettings Read()
             {
                 BuildUpEnvironments();
                 BuildUpParameters();
                 EnsureNoUnknownSectionProvided();
 
-                return new Configuration(_parametersList, _environmentsSet);
+                return new ConfigSettings(_parametersList, _environmentsSet);
             }
 
             private static YamlMappingNode ReadRoot(Stream source)
@@ -69,7 +69,7 @@ namespace MarWac.Merlin.SourceDrivers
                 var yamlDoc = LoadYamlFromSource(source).Documents?.FirstOrDefault();
                 if (yamlDoc == null)
                 {
-                    throw new InvalidYamlConfigurationFormatException("Empty YAML source. Cannot read configuration.");
+                    throw new InvalidYamlConfigurationFormatException("Empty YAML source. Cannot read configSettings.");
                 }
 
                 var rootAsMapping = yamlDoc.RootNode as YamlMappingNode;
@@ -93,7 +93,7 @@ namespace MarWac.Merlin.SourceDrivers
                     }
                     catch (SemanticErrorException ex)
                     {
-                        throw new SourceReadException("Invalid YAML syntax in configuration source provided.", ex);
+                        throw new SourceReadException("Invalid YAML syntax in configSettings source provided.", ex);
                     }
                 }
 
@@ -166,7 +166,7 @@ namespace MarWac.Merlin.SourceDrivers
                 throw new InvalidYamlConfigurationFormatException($"Invalid `{parameterName}` parameter definition.");
             }
 
-            private ConfigurationParameter ReadSimpleConfigurationParameter(string parameterName,
+            private static ConfigurationParameter ReadSimpleConfigurationParameter(string parameterName,
                 YamlNode parameterDefinition)
             {
                 return new ConfigurationParameter(parameterName, parameterDefinition.ToString());
@@ -216,7 +216,7 @@ namespace MarWac.Merlin.SourceDrivers
                 };
             }
 
-            private void MapDefaultAndEnvironmentValues(YamlMappingNode valueNode,
+            private static void MapDefaultAndEnvironmentValues(YamlMappingNode valueNode,
                 IDictionary<ConfigurableEnvironment, string> valueMapping, out string defaultValue)
             {
                 defaultValue = null;
@@ -252,11 +252,11 @@ namespace MarWac.Merlin.SourceDrivers
 
         private class Writer
         {
-            private readonly Configuration _configuration;
+            private readonly ConfigSettings _configSettings;
 
-            public Writer(Configuration configuration)
+            public Writer(ConfigSettings configSettings)
             {
-                _configuration = configuration;
+                _configSettings = configSettings;
             }
 
             public void Write(Stream output)
@@ -265,13 +265,13 @@ namespace MarWac.Merlin.SourceDrivers
                 {
                     new Serializer().Serialize(writer, new
                     {
-                        environments = _configuration.Environments.Any() 
-                            ? _configuration.Environments.Select(e => e.Name)
+                        environments = _configSettings.Environments.Any()
+                            ? _configSettings.Environments.Select(e => e.Name)
                             : null,
-                        parameters = _configuration.Parameters.Select(MapParamToDictionaryForSerialization)
+                        parameters = _configSettings.Parameters.Select(MapParamToDictionaryForSerialization)
                     });
 
-                    writer.Flush();   
+                    writer.Flush();
                 }
             }
 
@@ -319,7 +319,7 @@ namespace MarWac.Merlin.SourceDrivers
 
             private object GetEnvironmentValuesMapping(ConfigurationParameter parameter)
             {
-                var environmentsAvailableSorted = _configuration.Environments.OrderBy(env => env.Name);
+                var environmentsAvailableSorted = _configSettings.Environments.OrderBy(env => env.Name);
                 var environmentValuesMapping = new List<object>();
 
                 foreach (var environment in environmentsAvailableSorted)
@@ -332,7 +332,7 @@ namespace MarWac.Merlin.SourceDrivers
                 return environmentValuesMapping;
             }
 
-            private static void AddEnvironmentValueIfOtherThanDefault(List<object> environmentValuesMapping, 
+            private static void AddEnvironmentValueIfOtherThanDefault(List<object> environmentValuesMapping,
                 ConfigurationParameter parameter, ConfigurableEnvironment environment)
             {
                 string valueToSerialize;
@@ -347,7 +347,7 @@ namespace MarWac.Merlin.SourceDrivers
                 });
             }
 
-            private static void AddDefaultValueIfKnown(List<object> environmentValuesMapping, 
+            private static void AddDefaultValueIfKnown(List<object> environmentValuesMapping,
                 ConfigurationParameter parameter)
             {
                 if (!ConfigurationParameter.IsValueUnknown(parameter.DefaultValue))
@@ -360,13 +360,13 @@ namespace MarWac.Merlin.SourceDrivers
             }
 
             private static bool IsEnvironmentValueSameAsDefault(
-                ConfigurationParameter parameter, ConfigurableEnvironment environment, 
+                ConfigurationParameter parameter, ConfigurableEnvironment environment,
                 out string environmentValue)
             {
                 var isEnvironmentValueDefined = parameter.Values.TryGetValue(environment, out environmentValue);
 
                 if (!isEnvironmentValueDefined && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue)
-                    || isEnvironmentValueDefined 
+                    || isEnvironmentValueDefined
                        && ((ConfigurationParameter.IsValueUnknown(environmentValue) &&
                            ConfigurationParameter.IsValueUnknown(parameter.DefaultValue))
                            || environmentValue == parameter.DefaultValue))
@@ -384,7 +384,7 @@ namespace MarWac.Merlin.SourceDrivers
 
             private bool IsParameterValueDegenerated(ConfigurationParameter parameter)
             {
-                return !parameter.Values.Any() 
+                return !parameter.Values.Any()
                        || AreAllParamValuesKnownAndEqualToDefaultValue(parameter)
                        || AreAllParamValuesUnknownAndDefaultValueIsAlsoUnknown(parameter);
             }
@@ -392,13 +392,13 @@ namespace MarWac.Merlin.SourceDrivers
             private static bool AreAllParamValuesUnknownAndDefaultValueIsAlsoUnknown(
                 ConfigurationParameter parameter)
             {
-                return parameter.Values.All(v => ConfigurationParameter.IsValueUnknown(v.Value)) 
+                return parameter.Values.All(v => ConfigurationParameter.IsValueUnknown(v.Value))
                        && ConfigurationParameter.IsValueUnknown(parameter.DefaultValue);
             }
 
             private bool AreAllParamValuesKnownAndEqualToDefaultValue(ConfigurationParameter parameter)
             {
-                return parameter.Values.Count == _configuration.Environments.Count 
+                return parameter.Values.Count == _configSettings.Environments.Count
                        && parameter.Values.All(v => v.Value == parameter.DefaultValue);
             }
         }

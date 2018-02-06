@@ -10,7 +10,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Write_GivenOneParameterWithDefaultValueOnly_WritesCorrectly()
         {
-            var configuration = new Configuration(
+            var configuration = new ConfigSettings(
                 new[]
                 {
                     new ConfigurationParameter("maxThreads", "5")
@@ -29,7 +29,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver
         [Test]
         public void Write_GivenOneParameterWithMultipleEnvironmentValues_WritesCorrectly()
         {
-            var configuration = new Configuration(
+            var configuration = new ConfigSettings(
                 new[]
                 {
                     new ConfigurationParameter("maxThreads", "5", new Dictionary<ConfigurableEnvironment, string>
@@ -68,7 +68,7 @@ parameters:
         [Test]
         public void Write_GivenTwoParametersWithMultipleEnvironmentValues_WritesCorrectly()
         {
-            var configuration = new Configuration(
+            var configuration = new ConfigSettings(
                 new[]
                 {
                     new ConfigurationParameter("maxThreads", null, new Dictionary<ConfigurableEnvironment, string>
@@ -115,7 +115,7 @@ parameters:
         [Test]
         public void Write_GivenEnvironmentValueEqualsToDefaultValue_DoesNotSerializeEnvironmentValueAtAll()
         {
-            var configuration = new Configuration(
+            var configuration = new ConfigSettings(
                 new[]
                 {
                     new ConfigurationParameter("maxThreads", "15", new Dictionary<ConfigurableEnvironment, string>
@@ -148,7 +148,7 @@ parameters:
         [Test]
         public void Write_GivenAllEnvironmentValuesEqualToDefault_CollapsesParamDefinitionToImplicitDefaultValueOnly()
         {
-            var configuration = new Configuration(
+            var configuration = new ConfigSettings(
                 new[]
                 {
                     new ConfigurationParameter("maxThreads", "15", new Dictionary<ConfigurableEnvironment, string>

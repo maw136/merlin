@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -6,49 +7,49 @@ using System.Xml.Linq;
 namespace MarWac.Merlin.SourceDrivers
 {
     /// <summary>
-    /// Retrieves/stores the configuration from/to Excel XML 2003 format stream.
+    /// Retrieves/stores the configSettings from/to Excel XML 2003 format stream.
     /// </summary>
     public class ExcelConfigurationSourceDriver : ConfigurationSourceDriver
     {
         internal static readonly XNamespace Ns = "urn:schemas-microsoft-com:office:spreadsheet";
 
         /// <summary>
-        /// Retrieves the configuration from Excel XML 2003 format stream.
+        /// Retrieves the configSettings from Excel XML 2003 format stream.
         /// </summary>
         /// <param name="source">An Excel XML 2003 source stream</param>
-        /// <returns>Configuration instance filled with data from the the source</returns>
-        /// <exception cref="SourceReadException">Thrown if the Excel XML cannot be read as XML 
+        /// <returns>ConfigSettings instance filled with data from the the source</returns>
+        /// <exception cref="SourceReadException">Thrown if the Excel XML cannot be read as XML
         /// (XML-malformed).</exception>
         /// <exception cref="InvalidExcelConfigurationFormatException">Thrown if content of the Excel source does not
         /// align with the expected format.</exception>
-        public override Configuration Read(Stream source) => new Reader().Read(source);
+        public override ConfigSettings Read(Stream source) => Reader.Read(source);
 
         /// <summary>
-        /// Stores the configuration to Excel XML 2003 format stream.
+        /// Stores the configSettings to Excel XML 2003 format stream.
         /// </summary>
-        /// <param name="output">An output stream to store the configuration</param>
-        /// <param name="configuration">Configuration instance to be stored to the stream</param>
-        public override void Write(Stream output, Configuration configuration) =>
-            new Writer(configuration).Write(output);
+        /// <param name="output">An output stream to store the configSettings</param>
+        /// <param name="configSettings">ConfigSettings instance to be stored to the stream</param>
+        public override void Write(Stream output, ConfigSettings configSettings) =>
+            new Writer(configSettings).Write(output);
 
-        private class Reader
+        private static class Reader
         {
             private const int ColumnIndexOfFirstEnvironment = 4; // first column has index = 1
             private const int EnvironmentColumnsShift = ColumnIndexOfFirstEnvironment - 1;
 
-            public Configuration Read(Stream source)
+            public static ConfigSettings Read(Stream source)
             {
                 var allRows = GetAllTableRows(XElement.Load(source));
 
                 if (!allRows.Any())
                 {
-                    return new Configuration(Enumerable.Empty<ConfigurationParameter>());
+                    return new ConfigSettings(Enumerable.Empty<ConfigurationParameter>());
                 }
 
                 ConfigurableEnvironment[] environments = ParseHeader(allRows);
                 IEnumerable<ConfigurationParameter> parameters = ParseParameters(allRows, environments);
 
-                return new Configuration(parameters, environments);
+                return new ConfigSettings(parameters, environments);
             }
 
             private static XElement[] GetAllTableRows(XElement root)
@@ -87,7 +88,7 @@ namespace MarWac.Merlin.SourceDrivers
                 return environments;
             }
 
-            private static IEnumerable<ConfigurationParameter> ParseParameters(IEnumerable<XElement> allRows, 
+            private static IEnumerable<ConfigurationParameter> ParseParameters(IEnumerable<XElement> allRows,
                 ConfigurableEnvironment[] environments)
             {
                 return allRows
@@ -96,7 +97,7 @@ namespace MarWac.Merlin.SourceDrivers
                     .Select(row => CreateParameter(row.Elements(Ns + "Cell"), environments));
             }
 
-            private static ConfigurationParameter CreateParameter(IEnumerable<XElement> rowCells, 
+            private static ConfigurationParameter CreateParameter(IEnumerable<XElement> rowCells,
                 ConfigurableEnvironment[] environments)
             {
                 var environmentValuesMapping = new Dictionary<ConfigurableEnvironment, string>();
@@ -114,7 +115,7 @@ namespace MarWac.Merlin.SourceDrivers
                         break;
                     }
 
-                    BuildParamPart(environments, cell, currentColumnIndex, 
+                    BuildParamPart(environments, cell, currentColumnIndex,
                         ref paramName, ref paramDescription, ref paramDefaultValue, environmentValuesMapping);
 
                     currentColumnIndex++;
@@ -130,9 +131,9 @@ namespace MarWac.Merlin.SourceDrivers
                 };
             }
 
-            private static void BuildParamPart(ConfigurableEnvironment[] environments, 
+            private static void BuildParamPart(ConfigurableEnvironment[] environments,
                 XElement cell, int currentColumnIndex,
-                ref string paramName, ref string paramDescription, ref string paramDefaultValue, 
+                ref string paramName, ref string paramDescription, ref string paramDefaultValue,
                 Dictionary<ConfigurableEnvironment, string> environmentValuesMapping)
             {
                 string cellValue = GetCellValue(cell);
@@ -169,7 +170,7 @@ namespace MarWac.Merlin.SourceDrivers
             {
                 return cell
                     .Attributes(Ns + "Index")
-                    .Select(a => (int?) int.Parse(a.Value))
+                    .Select(a => (int?) int.Parse(a.Value, NumberStyles.None, CultureInfo.InvariantCulture))
                     .FirstOrDefault();
             }
 
@@ -184,14 +185,14 @@ namespace MarWac.Merlin.SourceDrivers
         private class Writer
         {
             private const string MainSheetName = "ConfigurationDictionary";
-            private readonly Configuration _configuration;
+            private readonly ConfigSettings _configSettings;
             private readonly ConfigurableEnvironment[] _environments;
             private static readonly string[] HeaderColumnNames = {"Name", "Description", "Default"};
 
-            public Writer(Configuration configuration)
+            public Writer(ConfigSettings configSettings)
             {
-                _configuration = configuration;
-                _environments = _configuration.Environments.ToArray();
+                _configSettings = configSettings;
+                _environments = _configSettings.Environments.ToArray();
             }
 
             public void Write(Stream output)
@@ -211,8 +212,8 @@ namespace MarWac.Merlin.SourceDrivers
 
             private IEnumerable<XElement> CreateParameterRows()
             {
-                return 
-                    from parameter in _configuration.Parameters
+                return
+                    from parameter in _configSettings.Parameters
                     let nonEnvironmentValues = new[] {parameter.Name, parameter.Description, parameter.DefaultValue}
                     let valuesInEnvironments = CalculateValuesPerAllEnvironments(parameter)
                     select CreateRow(nonEnvironmentValues.Concat(valuesInEnvironments));
@@ -237,7 +238,7 @@ namespace MarWac.Merlin.SourceDrivers
                 return valuesInEnvironments;
             }
 
-            private XElement CreateRow(IEnumerable<string> values)
+            private static XElement CreateRow(IEnumerable<string> values)
             {
                 return new XElement(Ns + "Row", values.Select(v => new XElement(Ns + "Cell",
                     new XElement(Ns + "Data", new XAttribute(Ns + "Type", "String"), v))));
