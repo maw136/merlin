@@ -16,7 +16,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver.ReadingTests
                   - key
                  - error"));
 
-            Assert.That(ex.Message, Is.EqualTo("Invalid YAML syntax in configuration source provided."));
+            Assert.That(ex.Message, Is.EqualTo("Invalid YAML syntax in configSettings source provided."));
             Assert.That(ex.InnerException, Is.TypeOf<SemanticErrorException>());
         }
 

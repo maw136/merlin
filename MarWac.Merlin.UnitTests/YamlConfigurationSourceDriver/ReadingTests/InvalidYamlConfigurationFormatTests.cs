@@ -44,7 +44,7 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver.ReadingTests
         {
             var ex = Assert.Throws<InvalidYamlConfigurationFormatException>(() => DriverWrapper.ReadYaml(string.Empty));
 
-            Assert.That(ex.Message, Is.EqualTo("Empty YAML source. Cannot read configuration."));
+            Assert.That(ex.Message, Is.EqualTo("Empty YAML source. Cannot read configSettings."));
         }
 
         [Test]
