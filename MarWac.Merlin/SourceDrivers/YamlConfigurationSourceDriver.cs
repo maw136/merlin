@@ -72,8 +72,7 @@ namespace MarWac.Merlin.SourceDrivers
                     throw new InvalidYamlConfigurationFormatException("Empty YAML source. Cannot read configuration.");
                 }
 
-                var rootAsMapping = yamlDoc.RootNode as YamlMappingNode;
-                if (rootAsMapping == null)
+                if (!(yamlDoc.RootNode is YamlMappingNode rootAsMapping))
                 {
                     throw new InvalidYamlConfigurationFormatException("No valid section provided.");
                 }
@@ -102,20 +101,17 @@ namespace MarWac.Merlin.SourceDrivers
 
             private IEnumerable<YamlScalarNode> ReadEnvironmentsSequence()
             {
-                YamlNode environmentsSectionNode;
-                _root.Children.TryGetValue(EnvironmentsSectionName, out environmentsSectionNode);
-                YamlSequenceNode environmentsSequence = environmentsSectionNode as YamlSequenceNode;
+                _root.Children.TryGetValue(EnvironmentsSectionName, out var environmentsSectionNode);
+                var environmentsSequence = environmentsSectionNode as YamlSequenceNode;
 
                 return environmentsSequence?.Children.OfType<YamlScalarNode>() ?? Enumerable.Empty<YamlScalarNode>();
             }
 
             private IEnumerable<YamlMappingNode> ReadParametersSequence()
             {
-                YamlNode parametersSectionNode;
-                _root.Children.TryGetValue(ParametersSectionName, out parametersSectionNode);
-                YamlSequenceNode parametersSequence = parametersSectionNode as YamlSequenceNode;
+                _root.Children.TryGetValue(ParametersSectionName, out var parametersSectionNode);
 
-                if (parametersSequence == null)
+                if (!(parametersSectionNode is YamlSequenceNode parametersSequence))
                 {
                     throw new InvalidYamlConfigurationFormatException($"Missing `{ParametersSectionName}` section.");
                 }
@@ -153,14 +149,12 @@ namespace MarWac.Merlin.SourceDrivers
                 string parameterName = parameterAssignment.Key.ToString();
                 YamlNode parameterDefinition = parameterAssignment.Value;
 
-                if (parameterDefinition is YamlScalarNode)
+                switch (parameterDefinition)
                 {
-                    return ReadSimpleConfigurationParameter(parameterName, parameterDefinition);
-                }
-                var parameterDefinitionMapping = parameterDefinition as YamlMappingNode;
-                if (parameterDefinitionMapping != null)
-                {
-                    return ReadComplexConfigurationParameter(parameterName, parameterDefinitionMapping);
+                    case YamlScalarNode _:
+                        return ReadSimpleConfigurationParameter(parameterName, parameterDefinition);
+                    case YamlMappingNode parameterDefinitionMapping:
+                        return ReadComplexConfigurationParameter(parameterName, parameterDefinitionMapping);
                 }
 
                 throw new InvalidYamlConfigurationFormatException($"Invalid `{parameterName}` parameter definition.");
@@ -175,24 +169,19 @@ namespace MarWac.Merlin.SourceDrivers
             private ConfigurationParameter ReadComplexConfigurationParameter(string parameterName,
                 YamlMappingNode parameterDefinition)
             {
-                YamlNode descriptionNode;
-                parameterDefinition.Children.TryGetValue(ParameterDescriptionPropertyName, out descriptionNode);
+                parameterDefinition.Children.TryGetValue(ParameterDescriptionPropertyName, out var descriptionNode);
+                parameterDefinition.Children.TryGetValue(ParameterValuePropertyName, out var values);
 
-                YamlNode values;
-                parameterDefinition.Children.TryGetValue(ParameterValuePropertyName, out values);
-
-                if (values is YamlScalarNode)
+                switch (values)
                 {
-                    return new ConfigurationParameter(parameterName, values.ToString())
-                    {
-                        Description = descriptionNode?.ToString()
-                    };
-                }
-                var sequenceOfValuesNode = values as YamlSequenceNode;
-                if (sequenceOfValuesNode != null)
-                {
-                    return ReadMultipleEnvironmentsConfiguredParameter(parameterName, sequenceOfValuesNode,
-                        descriptionNode);
+                    case YamlScalarNode _:
+                        return new ConfigurationParameter(parameterName, values.ToString())
+                        {
+                            Description = descriptionNode?.ToString()
+                        };
+                    case YamlSequenceNode sequenceOfValuesNode:
+                        return ReadMultipleEnvironmentsConfiguredParameter(parameterName, sequenceOfValuesNode,
+                            descriptionNode);
                 }
 
                 throw new InvalidYamlConfigurationFormatException(
@@ -340,8 +329,7 @@ namespace MarWac.Merlin.SourceDrivers
             private static void AddEnvironmentValueIfOtherThanDefault(List<object> environmentValuesMapping, 
                 ConfigurationParameter parameter, ConfigurableEnvironment environment)
             {
-                string valueToSerialize;
-                if (IsEnvironmentValueSameAsDefault(parameter, environment, out valueToSerialize))
+                if (IsEnvironmentValueSameAsDefault(parameter, environment, out var valueToSerialize))
                 {
                     return;
                 }
