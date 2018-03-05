@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>MarWac.Merlin.Console</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <title>MarWac.Merlin.Console</title>
     <authors>Marcin Wachulski</authors>
     <licenseUrl>https://github.com/wachulski/merlin/blob/master/LICENSE</licenseUrl>
