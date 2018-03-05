@@ -207,7 +207,12 @@ namespace MarWac.Merlin.SourceDrivers
 
                 foreach (var valueNode in valueNodes.OfType<YamlMappingNode>())
                 {
-                    MapDefaultAndEnvironmentValues(valueNode, valueMapping, out defaultValue);
+                    MapDefaultAndEnvironmentValues(valueNode, valueMapping, out string defaultValueIfFound);
+                    
+                    if (defaultValueIfFound != null)
+                    {
+                        defaultValue = defaultValueIfFound;
+                    }
                 }
 
                 return new ConfigurationParameter(parameterName, defaultValue, valueMapping)
