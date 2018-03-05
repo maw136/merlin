@@ -177,5 +177,23 @@ namespace MarWac.Merlin.UnitTests.YamlConfigurationSourceDriver.ReadingTests
 
             Assert.That(configuration.Parameters.ElementAt(0).DefaultValue, Is.EqualTo("10"));
         }
+
+        [Test]
+        public void Read_GivenDefaultInBetweenEnvironmentValues_ReadsParameterDefaultValueCorrectly()
+        {
+            var configuration = DriverWrapper.ReadYaml(@"---
+                environments:
+                    - dev
+                    - test
+
+                parameters:
+                    - callTimeoutSeconds:
+                        value:
+                          - dev: 50
+                          - default: 10
+                          - test: 40");
+
+            Assert.That(configuration.Parameters.ElementAt(0).DefaultValue, Is.EqualTo("10"));
+        }
     }
 }
